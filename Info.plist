@@ -1,0 +1,66 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+    <key>CFBundleDevelopmentRegion</key>
+    <string>zh_CN</string>
+    <key>CFBundleDisplayName</key>
+    <string>老铁</string>
+    <key>CFBundleExecutable</key>
+    <string>$(EXECUTABLE_NAME)</string>
+    <key>CFBundleIdentifier</key>
+    <string>$(PRODUCT_BUNDLE_IDENTIFIER)</string>
+    <key>CFBundleInfoDictionaryVersion</key>
+    <string>6.0</string>
+    <key>CFBundleName</key>
+    <string>$(PRODUCT_NAME)</string>
+    <key>CFBundlePackageType</key>
+    <string>APPL</string>
+    <key>CFBundleShortVersionString</key>
+    <string>1.0.0</string>
+    <key>CFBundleVersion</key>
+    <string>1</string>
+    <key>LSRequiresIPhoneOS</key>
+    <true/>
+    <key>UIApplicationSceneManifest</key>
+    <dict>
+        <key>UIApplicationSupportsMultipleScenes</key>
+        <false/>
+    </dict>
+    <key>UILaunchScreen</key>
+    <dict/>
+    <key>UISupportedInterfaceOrientations</key>
+    <array>
+        <string>UIInterfaceOrientationPortrait</string>
+    </array>
+    <key>UISupportedInterfaceOrientations~ipad</key>
+    <array>
+        <string>UIInterfaceOrientationPortrait</string>
+        <string>UIInterfaceOrientationPortraitUpsideDown</string>
+        <string>UIInterfaceOrientationLandscapeLeft</string>
+        <string>UIInterfaceOrientationLandscapeRight</string>
+    </array>
+    <key>UIRequiredDeviceCapabilities</key>
+    <array>
+        <string>iphone-ipad-minimum-deployment-target</string>
+    </array>
+
+    <!-- HealthKit -->
+    <key>NSHealthShareUsageDescription</key>
+    <string>老铁 VetBuddy 需要读取您的步数、心率和体重，帮您记录每天的运动情况，生成健康报告。数据仅保存在您的手机本地，不会上传或分享给任何人。</string>
+    <key>NSHealthUpdateUsageDescription</key>
+    <string>老铁 VetBuddy 需要记录您的健康数据，帮您跟踪运动效果。数据仅保存在您的手机本地。</string>
+
+    <!-- Camera (Vision AI) -->
+    <key>NSCameraUsageDescription</key>
+    <string>老铁 VetBuddy 使用摄像头识别您的动作，帮助您更准确地完成训练。视频数据仅在本地处理，不会上传。</string>
+
+    <!-- Photo Library (Poster Save) -->
+    <key>NSPhotoLibraryAddUsageDescription</key>
+    <string>老铁 VetBuddy 需要保存运动海报到您的相册，方便您分享给家人朋友。</string>
+
+    <!-- Background Modes -->
+    <key>UIBackgroundModes</key>
+    <array/>
+</dict>
+</plist>

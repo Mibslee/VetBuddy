@@ -1,0 +1,78 @@
+{
+  "generalDisclaimer": "本建议不替代医生诊疗。如有肾病或糖尿病，请咨询医生后再调整饮食。",
+  "proteinDisclaimer": "蛋白粉/补剂不是必须，日常饮食优先。",
+  "postWorkoutTip": "练完后半小时内喝一杯牛奶 + 吃两个鸡蛋，效果最好。别超过1小时。",
+
+  "ckdTiers": [
+    {
+      "level": "none",
+      "label": "健康（无肾脏疾病）",
+      "proteinRange": "1.0-1.2",
+      "proteinUnit": "g/kg/天",
+      "description": "正常蛋白质摄入，每日食物多样性≥12种",
+      "preferredSources": ["鸡蛋", "鱼/禽", "瘦肉", "豆制品", "牛奶"]
+    },
+    {
+      "level": "stage1to2",
+      "label": "CKD 1-2期（eGFR≥60）",
+      "proteinRange": "1.0-1.2",
+      "proteinUnit": "g/kg/天",
+      "description": "可正常摄入，需定期监测肾功能",
+      "preferredSources": ["鸡蛋", "鱼/禽", "豆腐"]
+    },
+    {
+      "level": "stage3",
+      "label": "CKD 3期（eGFR 30-59）",
+      "proteinRange": "0.8-1.0",
+      "proteinUnit": "g/kg/天",
+      "description": "减少蛋白质摄入，优选植物蛋白",
+      "preferredSources": ["豆腐", "豆制品", "鸡蛋（限量）"]
+    },
+    {
+      "level": "stage4to5",
+      "label": "CKD 4-5期（eGFR<30）",
+      "proteinRange": "0.6-0.8",
+      "proteinUnit": "g/kg/天",
+      "description": "严格限制蛋白质，必须在医生指导下进行",
+      "preferredSources": ["酮酸补充（遵医嘱）"]
+    }
+  ],
+
+  "foods": [
+    {"name": "鸡蛋（全蛋）", "proteinPer100g": "13g", "rank": 1, "notes": "易消化、烹饪简单、咀嚼适合老人", "bestFor": "all"},
+    {"name": "鸡胸肉", "proteinPer100g": "23-25g", "rank": 1, "notes": "需切小块或剁碎", "bestFor": "all"},
+    {"name": "鱼类（三文鱼/鲈鱼）", "proteinPer100g": "20-22g", "rank": 1, "notes": "Omega-3协同抗炎，注意骨刺", "bestFor": "all"},
+    {"name": "牛奶/酸奶（无糖）", "proteinPer100g": "3-3.5g/100ml", "rank": 2, "notes": "乳糖不耐可选酸奶", "bestFor": "all"},
+    {"name": "豆腐/豆制品", "proteinPer100g": "8g", "rank": 2, "notes": "CKD患者优选！植物蛋白对肾负担小", "bestFor": "ckd"},
+    {"name": "大豆/毛豆", "proteinPer100g": "12-13g", "rank": 3, "notes": "富含异黄酮，适合60+女性", "bestFor": "all"},
+    {"name": "虾/海鲜", "proteinPer100g": "18-20g", "rank": 3, "notes": "低脂高蛋白，注意胆固醇", "bestFor": "all"}
+  ],
+
+  "carbTips": [
+    {"avoid": "白米饭", "replace": "糙米/燕麦/杂粮饭（杂粮占1/3-1/2）", "reason": "白米GI≈73，糙米GI≈55"},
+    {"avoid": "白面（馒头/面条/白吐司）", "replace": "全麦/荞麦/燕麦/山药/红薯", "reason": "白馒头GI≈85，全麦面包GI≈50-60"},
+    {"avoid": "含糖饮料（可乐/果汁/奶茶）", "replace": "白开水/淡茶/无糖柠檬水", "reason": "一杯可乐≈54g精制糖"},
+    {"avoid": "甜点/蛋糕/饼干", "replace": "水果/坚果（无糖）", "reason": "一块蛋糕≈20-30g精制糖"},
+    {"avoid": "含糖麦片/早餐糊", "replace": "纯燕麦片（无添加糖）", "reason": "市售营养麦片常见含糖20-30g/100g"}
+  ],
+
+  "sampleMeals": {
+    "breakfast": {"time": "7:30", "items": "鸡蛋2个（煮）+ 牛奶250ml + 全麦面包1片 + 一小把核桃", "protein": "~22g"},
+    "lunch": {"time": "12:00", "items": "鸡胸肉100g + 杂粮饭200g + 蒸西兰花 + 豆腐汤", "protein": "~40g"},
+    "snack": {"time": "15:30", "items": "无糖酸奶200g + 杏仁一小把 + 蓝莓", "protein": "~10g"},
+    "dinner": {"time": "18:00", "items": "清蒸鱼100g + 糙米饭100g + 焯青菜 + 玉米半根", "protein": "~30g"}
+  },
+
+  "motivationalQuotes": [
+    "今天也是元气满满的一天！",
+    "一小步，一大步！",
+    "你比昨天的自己更棒！",
+    "坚持就是胜利，加油！",
+    "每天动一动，身体更轻松！",
+    "腿脚有力，走遍天下！",
+    "您今天的表现真棒！",
+    "动起来，心情也会好起来！",
+    "健康是最好的礼物！",
+    "一步一步，越来越好！"
+  ]
+}

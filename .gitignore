@@ -1,0 +1,38 @@
+# macOS
+.DS_Store
+._*
+
+# Xcode / Swift build output
+build/
+.build/
+DerivedData/
+.swiftpm/
+*.xcuserstate
+xcuserdata/
+
+# Generated project files. Recreate with ./generate_project.sh or xcodegen generate.
+VetBuddy.xcodeproj/
+
+# App Store / distribution packages
+AppStore_Submission/
+AppStore_Submission*.zip
+
+# Private voice material and generated voice packs
+voice_gen/
+Resources/Voice/
+Tools/mimo_voiceclone.py
+
+# Personal or licensed media assets are intentionally not published in source-only repo.
+*.png
+*.jpg
+*.jpeg
+*.heic
+*.mp3
+*.wav
+*.m4a
+*.mp4
+*.mov
+*.zip
+
+# Local reference/design scratch files
+UI 参考/

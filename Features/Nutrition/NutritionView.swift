@@ -1,0 +1,876 @@
+import SwiftUI
+
+/// Nutrition advice screen showing protein targets, food lists,
+/// carb tips, and sample meal plans.
+struct NutritionView: View {
+
+    @StateObject private var viewModel = NutritionViewModel()
+    @State private var showAddDietEntry = false
+
+    var body: some View {
+        NavigationStack {
+            ScrollView {
+                VStack(spacing: 24) {
+                    if viewModel.isRedFlag {
+                        redFlagBanner
+                    }
+
+                    if let advice = viewModel.advice {
+                        motivationalQuote(advice.randomQuote)
+                        if let req = advice.requirements {
+                            nutritionRequirementsCard(req)
+                        }
+                        seniorPlateSection
+                        dietTrackingSection
+                        proteinTargetCard(advice)
+                        chineseRecipeSection
+                        healthSwapSection(advice)
+                        ckdTierCard(advice)
+                        preferredFoodsSection(advice)
+                        carbTipsSection(advice)
+                        sampleMealSection(advice)
+                        postWorkoutTip(advice)
+                        disclaimerSection(advice)
+                    } else if viewModel.isLoading {
+                        ProgressView("加载中...")
+                            .frame(minHeight: 200)
+                    } else {
+                        emptyState
+                    }
+                }
+                .padding(.horizontal, 20)
+                .padding(.top, 16)
+                .padding(.bottom, 32)
+            }
+            .background(Color.vbCream.ignoresSafeArea())
+            .toolbar(.hidden, for: .navigationBar)
+            .task { await viewModel.loadAdvice() }
+            .sheet(isPresented: $showAddDietEntry) {
+                AddDietEntryView { mealType, foodName, grams, protein, carbs, fat in
+                    viewModel.addDietEntry(
+                        mealType: mealType,
+                        foodName: foodName,
+                        grams: grams,
+                        proteinPer100g: protein,
+                        carbsPer100g: carbs,
+                        fatPer100g: fat
+                    )
+                    showAddDietEntry = false
+                }
+            }
+        }
+    }
+
+    // MARK: - Red Flag Banner
+
+    private var redFlagBanner: some View {
+        HStack(spacing: 12) {
+            Image(systemName: "exclamationmark.triangle.fill")
+                .foregroundStyle(Color.vbWarning)
+                .font(.system(size: 24))
+            Text("您的健康评估结果为红旗禁止，建议咨询医生后再开始运动")
+                .vbBody()
+                .foregroundStyle(Color.vbWarning)
+        }
+        .padding(16)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .background(Color.vbWarning.opacity(0.08))
+        .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
+    }
+
+    // MARK: - Nutrition Requirements
+
+    private func nutritionRequirementsCard(_ req: NutritionRequirements) -> some View {
+        VStack(spacing: 16) {
+            HStack {
+                Image(systemName: "flame.circle.fill")
+                    .font(.system(size: 28))
+                    .foregroundStyle(Color.vbAccent)
+                Text("每日营养需求")
+                    .vbHeadline()
+                Spacer()
+                Text("BMR \(req.bmr) kcal")
+                    .vbCaption()
+            }
+
+            // Calorie target
+            HStack {
+                Text("总热量")
+                    .vbBody()
+                Spacer()
+                Text("\(req.tdee)")
+                    .font(VBFont.title)
+                    .foregroundStyle(Color.vbAccent)
+                Text("kcal/天")
+                    .vbCaption()
+            }
+
+            Divider()
+
+            // Macro breakdown
+            HStack(spacing: 0) {
+                macroItem(label: "蛋白质", value: "\(req.proteinG)g", color: .vbAccent)
+                macroItem(label: "碳水", value: "\(req.carbsG)g", color: .vbDistantMountain)
+                macroItem(label: "脂肪", value: "\(req.fatG)g", color: .vbSuccess)
+            }
+
+            // Water
+            HStack {
+                Image(systemName: "drop.fill")
+                    .foregroundStyle(.blue)
+                Text("饮水")
+                    .vbBody()
+                Spacer()
+                Text("\(req.waterML) ml")
+                    .font(VBFont.headline)
+                    .foregroundStyle(.blue)
+            }
+
+            // Adjustments
+            if !req.adjustments.isEmpty {
+                Divider()
+                VStack(alignment: .leading, spacing: 6) {
+                    ForEach(req.adjustments, id: \.self) { adj in
+                        HStack(alignment: .top, spacing: 6) {
+                            Image(systemName: "info.circle")
+                                .foregroundStyle(Color.vbWarning)
+                                .font(.system(size: 14))
+                                .padding(.top, 2)
+                            Text(adj)
+                                .vbCaption()
+                                .foregroundStyle(Color.vbSecondaryText)
+                        }
+                    }
+                }
+            }
+        }
+        .padding(20)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .background(Color.vbCardBackground)
+        .clipShape(RoundedRectangle(cornerRadius: 16, style: .continuous))
+    }
+
+    private func macroItem(label: String, value: String, color: Color) -> some View {
+        VStack(spacing: 6) {
+            Text(value)
+                .font(VBFont.headline)
+                .foregroundStyle(color)
+            Text(label)
+                .vbCaption()
+        }
+        .frame(maxWidth: .infinity)
+    }
+
+    // MARK: - Senior Plate
+
+    private var seniorPlateSection: some View {
+        VStack(alignment: .leading, spacing: 14) {
+            HStack(spacing: 10) {
+                Image(systemName: "circle.grid.cross.fill")
+                    .font(.system(size: 24))
+                    .foregroundStyle(Color.vbAccent)
+                Text("老年友好餐盘")
+                    .vbHeadline()
+                Spacer()
+                Text("每餐参考")
+                    .vbCaption()
+                    .foregroundStyle(Color.vbSecondaryText)
+            }
+
+            HStack(spacing: 10) {
+                platePortion(title: "1/2", subtitle: "蔬菜 + 少量水果", color: Color.vbSuccess)
+                platePortion(title: "1/4", subtitle: "鱼禽蛋奶豆", color: Color.vbAccent)
+                platePortion(title: "1/4", subtitle: "全谷薯类主食", color: Color.vbDistantMountain)
+            }
+
+            VStack(alignment: .leading, spacing: 8) {
+                compactTip("每天尽量吃到 12 种以上食物，每周 25 种以上。")
+                compactTip("少盐少油，优先蒸、煮、炖、焯，少煎炸和重口味酱料。")
+                compactTip("牙口差时，把肉切碎、鱼去刺、蔬菜煮软，保留营养也更好入口。")
+            }
+        }
+        .padding(16)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .background(Color.vbCardBackground)
+        .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
+    }
+
+    private func platePortion(title: String, subtitle: String, color: Color) -> some View {
+        VStack(spacing: 6) {
+            Text(title)
+                .font(VBFont.headline)
+                .foregroundStyle(color)
+            Text(subtitle)
+                .vbCaption()
+                .multilineTextAlignment(.center)
+                .foregroundStyle(Color.vbSecondaryText)
+                .lineLimit(2)
+                .minimumScaleFactor(0.86)
+        }
+        .frame(maxWidth: .infinity, minHeight: 76)
+        .padding(8)
+        .background(color.opacity(0.08))
+        .clipShape(RoundedRectangle(cornerRadius: 10, style: .continuous))
+    }
+
+    private func compactTip(_ text: String) -> some View {
+        HStack(alignment: .top, spacing: 8) {
+            Image(systemName: "checkmark.circle.fill")
+                .font(.system(size: 14))
+                .foregroundStyle(Color.vbSuccess)
+                .padding(.top, 2)
+            Text(text)
+                .vbCaption()
+                .foregroundStyle(Color.vbSecondaryText)
+        }
+    }
+
+    // MARK: - Diet Tracking
+
+    private var dietTrackingSection: some View {
+        VStack(alignment: .leading, spacing: 16) {
+            HStack {
+                Image(systemName: "list.clipboard.fill")
+                    .font(.system(size: 26))
+                    .foregroundStyle(Color.vbAccent)
+                Text("今日饮食记录")
+                    .vbHeadline()
+                Spacer()
+                Button {
+                    showAddDietEntry = true
+                } label: {
+                    Label("记录", systemImage: "plus")
+                        .font(VBFont.body)
+                }
+                .foregroundStyle(Color.vbAccent)
+                .frame(minHeight: 44)
+            }
+
+            if let analysis = viewModel.dietAnalysis {
+                dietAnalysisCard(analysis)
+            } else {
+                missingWeightCard
+            }
+
+            if viewModel.dietEntries.isEmpty {
+                Text("还没有记录。添加今天吃过的食物后，老铁 VetBuddy 会按当前目标估算蛋白质、碳水和脂肪是否合适。")
+                    .vbBody()
+                    .foregroundStyle(Color.vbSecondaryText)
+            } else {
+                VStack(spacing: 10) {
+                    ForEach(viewModel.dietEntries) { entry in
+                        dietEntryRow(entry)
+                    }
+                }
+            }
+
+            Text("饮食分析仅用于日常记录和估算，不构成医学建议；肾病、糖尿病、心血管疾病或体重快速变化时，请以医生或营养师意见为准。")
+                .vbCaption()
+                .foregroundStyle(Color.vbWarning)
+                .padding(.top, 2)
+        }
+        .padding(20)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .background(Color.vbCardBackground)
+        .clipShape(RoundedRectangle(cornerRadius: 16, style: .continuous))
+    }
+
+    private func dietAnalysisCard(_ analysis: DietMacroAnalysis) -> some View {
+        VStack(alignment: .leading, spacing: 14) {
+            HStack(spacing: 14) {
+                macroSummaryValue(label: "热量", value: "\(analysis.summary.calories)", unit: "kcal")
+                macroSummaryValue(label: "蛋白质", value: formatGrams(analysis.summary.proteinG), unit: "g")
+                macroSummaryValue(label: "碳水", value: formatGrams(analysis.summary.carbsG), unit: "g")
+                macroSummaryValue(label: "脂肪", value: formatGrams(analysis.summary.fatG), unit: "g")
+            }
+
+            ForEach(analysis.nutrients, id: \.name) { nutrient in
+                macroAnalysisRow(nutrient)
+            }
+
+            Text(analysis.message)
+                .vbBody()
+                .foregroundStyle(Color.vbSecondaryText)
+        }
+        .padding(14)
+        .background(Color.vbSurfaceVariant.opacity(0.55))
+        .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
+    }
+
+    private var missingWeightCard: some View {
+        HStack(alignment: .top, spacing: 10) {
+            Image(systemName: "scalemass")
+                .foregroundStyle(Color.vbAccent)
+                .font(.system(size: 22))
+            Text("录入或同步体重后，可按评估结果计算每日目标，并分析今日摄入是否匹配。")
+                .vbBody()
+                .foregroundStyle(Color.vbSecondaryText)
+        }
+        .padding(14)
+        .background(Color.vbSurfaceVariant.opacity(0.55))
+        .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
+    }
+
+    private func macroSummaryValue(label: String, value: String, unit: String) -> some View {
+        VStack(alignment: .leading, spacing: 4) {
+            Text(label)
+                .vbCaption()
+                .foregroundStyle(Color.vbSecondaryText)
+            HStack(alignment: .firstTextBaseline, spacing: 2) {
+                Text(value)
+                    .font(VBFont.headline)
+                    .foregroundStyle(Color.vbMainText)
+                Text(unit)
+                    .vbCaption()
+            }
+        }
+        .frame(maxWidth: .infinity, alignment: .leading)
+    }
+
+    private func macroAnalysisRow(_ nutrient: MacroNutrientAnalysis) -> some View {
+        HStack {
+            VStack(alignment: .leading, spacing: 4) {
+                Text(nutrient.name)
+                    .vbBody()
+                Text("\(formatGrams(nutrient.actualG))g / 目标 \(nutrient.targetG)g")
+                    .vbCaption()
+                    .foregroundStyle(Color.vbSecondaryText)
+            }
+            Spacer()
+            Text(nutrient.status.displayName)
+                .font(VBFont.caption)
+                .foregroundStyle(.white)
+                .padding(.horizontal, 10)
+                .padding(.vertical, 6)
+                .background(statusColor(nutrient.status))
+                .clipShape(Capsule())
+        }
+    }
+
+    private func dietEntryRow(_ entry: DietLogEntry) -> some View {
+        HStack(spacing: 12) {
+            VStack(alignment: .leading, spacing: 4) {
+                Text(entry.foodName)
+                    .vbBody()
+                Text("\(entry.mealType.displayName) · \(formatGrams(entry.grams))g · 蛋白 \(formatGrams(entry.proteinG))g / 碳水 \(formatGrams(entry.carbsG))g / 脂肪 \(formatGrams(entry.fatG))g")
+                    .vbCaption()
+                    .foregroundStyle(Color.vbSecondaryText)
+                    .lineLimit(2)
+            }
+            Spacer()
+            Button {
+                viewModel.deleteDietEntry(entry)
+            } label: {
+                Image(systemName: "trash")
+                    .font(.system(size: 18, weight: .semibold))
+                    .foregroundStyle(Color.vbWarning)
+                    .frame(width: 44, height: 44)
+            }
+            .accessibilityLabel("删除 \(entry.foodName)")
+        }
+        .padding(12)
+        .background(Color.vbCream.opacity(0.72))
+        .clipShape(RoundedRectangle(cornerRadius: 10, style: .continuous))
+    }
+
+    private func statusColor(_ status: MacroStatus) -> Color {
+        switch status {
+        case .low: return Color.vbWarning
+        case .onTrack: return Color.vbSuccess
+        case .high: return Color.orange
+        }
+    }
+
+    private func formatGrams(_ value: Double) -> String {
+        if value.rounded() == value {
+            return String(format: "%.0f", value)
+        }
+        return String(format: "%.1f", value)
+    }
+
+    private func motivationalQuote(_ quote: String) -> some View {
+        VStack(alignment: .leading, spacing: 14) {
+            HStack(spacing: 12) {
+                Text("「\(quote)」")
+                    .font(VBFont.headline)
+                    .foregroundStyle(Color.vbAccent)
+                    .italic()
+
+                Spacer()
+
+                Button {
+                    viewModel.refreshQuote()
+                } label: {
+                    Image(systemName: "arrow.clockwise")
+                        .font(.system(size: 18, weight: .semibold))
+                        .foregroundStyle(Color.vbAccent)
+                        .frame(width: 44, height: 44)
+                }
+                .accessibilityLabel("换一句")
+            }
+
+            Button {
+                showAddDietEntry = true
+            } label: {
+                Label("记录饮食", systemImage: "plus.circle.fill")
+                    .font(VBFont.headline)
+                    .foregroundStyle(Color.vbAccent)
+                    .frame(maxWidth: .infinity, minHeight: 48)
+                    .background(Color.vbCream.opacity(0.65))
+                    .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
+            }
+            .buttonStyle(.plain)
+        }
+        .padding(20)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .background(Color.vbCardBackground)
+        .clipShape(RoundedRectangle(cornerRadius: 16, style: .continuous))
+    }
+
+    // MARK: - Chinese Recipes
+
+    private var chineseRecipeSection: some View {
+        VStack(alignment: .leading, spacing: 14) {
+            HStack(spacing: 10) {
+                Image(systemName: "menucard.fill")
+                    .font(.system(size: 24))
+                    .foregroundStyle(Color.vbAccent)
+                Text("适合中国老年人的食谱")
+                    .vbHeadline()
+            }
+
+            ForEach(seniorRecipes) { recipe in
+                VStack(alignment: .leading, spacing: 8) {
+                    HStack {
+                        Text(recipe.title)
+                            .font(VBFont.headline)
+                            .foregroundStyle(Color.vbMainText)
+                        Spacer()
+                        Text(recipe.tag)
+                            .vbCaption()
+                            .foregroundStyle(Color.vbAccent)
+                            .padding(.horizontal, 8)
+                            .padding(.vertical, 4)
+                            .background(Color.vbAccent.opacity(0.1))
+                            .clipShape(Capsule())
+                    }
+
+                    Text(recipe.items)
+                        .vbBody()
+                        .foregroundStyle(Color.vbMainText)
+
+                    Text(recipe.notes)
+                        .vbCaption()
+                        .foregroundStyle(Color.vbSecondaryText)
+                }
+                .padding(12)
+                .background(Color.vbSurfaceVariant.opacity(0.48))
+                .clipShape(RoundedRectangle(cornerRadius: 10, style: .continuous))
+            }
+        }
+        .padding(16)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .background(Color.vbCardBackground)
+        .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
+    }
+
+    private func healthSwapSection(_ advice: NutritionAdvice) -> some View {
+        let swaps = healthAwareSwaps(advice)
+
+        return VStack(alignment: .leading, spacing: 14) {
+            HStack(spacing: 10) {
+                Image(systemName: "arrow.triangle.2.circlepath")
+                    .font(.system(size: 24))
+                    .foregroundStyle(Color.vbAccent)
+                Text("按健康状态微调")
+                    .vbHeadline()
+            }
+
+            ForEach(swaps, id: \.self) { swap in
+                compactTip(swap)
+            }
+
+            Text("这些是日常选择提醒，不替代医生、营养师给出的疾病饮食处方。")
+                .vbCaption()
+                .foregroundStyle(Color.vbWarning)
+        }
+        .padding(16)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .background(Color.vbCardBackground)
+        .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
+    }
+
+    private func healthAwareSwaps(_ advice: NutritionAdvice) -> [String] {
+        var swaps = [
+            "胃口差时先保证优质蛋白：鸡蛋羹、鱼片粥、豆腐汤、无糖酸奶都比只喝白粥更稳。",
+            "血压或心血管风险高时，少用咸菜、腊肉、火腿、浓汤底，改用葱姜蒜、醋、香菇提味。",
+            "便秘或活动少时，把白米饭的一部分换成燕麦、杂粮、红薯，并搭配绿叶菜和足量饮水。"
+        ]
+
+        if advice.hasDiabetes {
+            swaps.insert("糖尿病用户把主食分散到三餐，优先杂粮饭、荞麦面、山药，少喝粥和果汁。", at: 0)
+        }
+
+        if advice.ckdTier.level != .none {
+            swaps.insert("肾病用户不要自行高蛋白增肌，蛋白总量和豆制品、奶类、肉类份量按医生建议调整。", at: 0)
+        }
+
+        return swaps
+    }
+
+    // MARK: - Protein Target
+
+    private func proteinTargetCard(_ advice: NutritionAdvice) -> some View {
+        VStack(spacing: 16) {
+            Image(systemName: "fork.knife")
+                .font(.system(size: 36))
+                .foregroundStyle(Color.vbAccent)
+
+            Text("每日蛋白质目标")
+                .vbHeadline()
+
+            Text(advice.proteinTarget)
+                .font(VBFont.hero)
+                .foregroundStyle(Color.vbAccent)
+
+            Text(advice.ckdTier.description)
+                .vbBody()
+                .foregroundStyle(Color.vbSecondaryText)
+                .multilineTextAlignment(.center)
+        }
+        .padding(24)
+        .frame(maxWidth: .infinity)
+        .background(Color.vbCardBackground)
+        .clipShape(RoundedRectangle(cornerRadius: 16, style: .continuous))
+    }
+
+    // MARK: - CKD Tier
+
+    private func ckdTierCard(_ advice: NutritionAdvice) -> some View {
+        HStack {
+            VStack(alignment: .leading, spacing: 8) {
+                Text("肾脏健康等级")
+                    .vbHeadline()
+                Text(advice.ckdTier.label)
+                    .vbBody()
+                    .foregroundStyle(Color.vbSecondaryText)
+            }
+            Spacer()
+            Text(advice.ckdTier.proteinRange + " " + advice.ckdTier.proteinUnit)
+                .font(VBFont.headline)
+                .foregroundStyle(Color.vbAccent)
+        }
+        .padding(16)
+        .background(Color.vbCardBackground)
+        .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
+    }
+
+    // MARK: - Preferred Foods
+
+    private func preferredFoodsSection(_ advice: NutritionAdvice) -> some View {
+        VStack(alignment: .leading, spacing: 16) {
+            Text("推荐食物")
+                .vbHeadline()
+
+            ForEach(advice.preferredFoods) { food in
+                HStack {
+                    Text(rankBadge(food.rank))
+                        .font(VBFont.headline)
+                        .foregroundStyle(.white)
+                        .frame(width: 32, height: 32)
+                        .background(Color.vbAccent)
+                        .clipShape(Circle())
+
+                    VStack(alignment: .leading, spacing: 4) {
+                        Text(food.name)
+                            .vbBody()
+                        Text(food.notes)
+                            .vbCaption()
+                    }
+
+                    Spacer()
+
+                    Text(food.proteinPer100g)
+                        .font(VBFont.headline)
+                        .foregroundStyle(Color.vbAccent)
+                    Text("/100g")
+                        .vbCaption()
+                }
+                .padding(.vertical, 4)
+
+                if food.id != advice.preferredFoods.last?.id {
+                    Divider()
+                }
+            }
+        }
+        .padding(16)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .background(Color.vbCardBackground)
+        .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
+    }
+
+    private func rankBadge(_ rank: Int) -> String {
+        switch rank {
+        case 1: return "1"
+        case 2: return "2"
+        case 3: return "3"
+        default: return "\(rank)"
+        }
+    }
+
+    // MARK: - Carb Tips
+
+    private func carbTipsSection(_ advice: NutritionAdvice) -> some View {
+        VStack(alignment: .leading, spacing: 16) {
+            Text("碳水替换建议")
+                .vbHeadline()
+
+            ForEach(advice.carbTips, id: \.avoid) { tip in
+                HStack(alignment: .top, spacing: 12) {
+                    VStack(spacing: 4) {
+                        Text("避免")
+                            .vbCaption()
+                            .foregroundStyle(Color.vbWarning)
+                        Text(tip.avoid)
+                            .vbBody()
+                            .foregroundStyle(Color.vbWarning)
+                            .strikethrough()
+                    }
+                    .frame(maxWidth: .infinity)
+
+                    Image(systemName: "arrow.right")
+                        .foregroundStyle(Color.vbSecondaryText)
+                        .padding(.top, 16)
+
+                    VStack(spacing: 4) {
+                        Text("替换为")
+                            .vbCaption()
+                            .foregroundStyle(Color.vbSuccess)
+                        Text(tip.replace)
+                            .vbBody()
+                            .foregroundStyle(Color.vbSuccess)
+                    }
+                    .frame(maxWidth: .infinity)
+                }
+                .padding(12)
+                .background(Color.vbCardBackground.opacity(0.5))
+                .clipShape(RoundedRectangle(cornerRadius: 8, style: .continuous))
+            }
+        }
+        .padding(16)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .background(Color.vbCardBackground)
+        .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
+    }
+
+    // MARK: - Sample Meal
+
+    private func sampleMealSection(_ advice: NutritionAdvice) -> some View {
+        VStack(alignment: .leading, spacing: 16) {
+            Text("一日膳食参考")
+                .vbHeadline()
+
+            mealRow(icon: "sunrise.fill", label: "早餐", slot: advice.sampleMeal.breakfast)
+            Divider()
+            mealRow(icon: "sun.max.fill", label: "午餐", slot: advice.sampleMeal.lunch)
+            Divider()
+            mealRow(icon: "leaf.fill", label: "加餐", slot: advice.sampleMeal.snack)
+            Divider()
+            mealRow(icon: "moon.fill", label: "晚餐", slot: advice.sampleMeal.dinner)
+        }
+        .padding(16)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .background(Color.vbCardBackground)
+        .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
+    }
+
+    private func mealRow(icon: String, label: String, slot: SampleDayMeal.MealSlot) -> some View {
+        HStack(alignment: .top, spacing: 12) {
+            VStack(spacing: 4) {
+                Image(systemName: icon)
+                    .font(.system(size: 22))
+                    .foregroundStyle(Color.vbAccent)
+                Text(label)
+                    .vbCaption()
+            }
+            .frame(width: 50)
+
+            VStack(alignment: .leading, spacing: 4) {
+                Text(slot.items)
+                    .vbBody()
+                Text("蛋白质: \(slot.protein)")
+                    .vbCaption()
+                    .foregroundStyle(Color.vbAccent)
+            }
+
+            Spacer()
+        }
+    }
+
+    // MARK: - Post-Workout Tip
+
+    private func postWorkoutTip(_ advice: NutritionAdvice) -> some View {
+        HStack(spacing: 12) {
+            Image(systemName: "flame.fill")
+                .font(.system(size: 24))
+                .foregroundStyle(Color.vbAccent)
+            Text(advice.postWorkoutTip)
+                .vbBody()
+        }
+        .padding(16)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .background(Color.vbAccent.opacity(0.08))
+        .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
+    }
+
+    // MARK: - Disclaimer
+
+    private func disclaimerSection(_ advice: NutritionAdvice) -> some View {
+        VStack(alignment: .leading, spacing: 8) {
+            HStack(spacing: 6) {
+                Image(systemName: "info.circle")
+                    .foregroundStyle(Color.vbWarning)
+                Text("免责声明")
+                    .vbCaption()
+                    .foregroundStyle(Color.vbWarning)
+            }
+            Text(advice.disclaimer)
+                .vbCaption()
+                .foregroundStyle(Color.vbSecondaryText)
+        }
+        .padding(16)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .background(Color.vbWarning.opacity(0.05))
+        .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
+    }
+
+    // MARK: - Empty State
+
+    private var emptyState: some View {
+        VStack(spacing: 16) {
+            Spacer(minLength: 100)
+            Image(systemName: "leaf.circle")
+                .font(.system(size: 64))
+                .foregroundStyle(Color.vbSecondaryText)
+            Text("请先完成健康评估")
+                .vbHeadline()
+                .foregroundStyle(Color.vbSecondaryText)
+            Text("完成评估后可获取个性化饮食建议")
+                .vbBody()
+                .foregroundStyle(Color.vbSecondaryText)
+            Spacer(minLength: 100)
+        }
+    }
+}
+
+private struct SeniorRecipe: Identifiable {
+    let id = UUID()
+    let title: String
+    let tag: String
+    let items: String
+    let notes: String
+}
+
+private let seniorRecipes: [SeniorRecipe] = [
+    SeniorRecipe(
+        title: "软烂高蛋白早餐",
+        tag: "早餐",
+        items: "鸡蛋羹 + 无糖豆浆/牛奶 + 燕麦南瓜粥 + 焯青菜",
+        notes: "适合牙口一般、早晨胃口弱的人；粥里加蛋奶豆，比单喝白粥更有营养。"
+    ),
+    SeniorRecipe(
+        title: "家常均衡午餐",
+        tag: "午餐",
+        items: "清蒸鱼/鸡肉丸 + 半碗杂粮饭 + 番茄豆腐汤 + 两份时蔬",
+        notes: "鱼肉注意去刺，肉类切小块或做丸子；蔬菜一深一浅，颜色越丰富越好。"
+    ),
+    SeniorRecipe(
+        title: "清淡易消化晚餐",
+        tag: "晚餐",
+        items: "虾仁豆腐煲 + 山药/红薯 + 香菇青菜 + 少量水果",
+        notes: "晚餐不过量，主食不完全取消；睡前容易饿可选无糖酸奶或温牛奶。"
+    )
+]
+
+private struct AddDietEntryView: View {
+    @Environment(\.dismiss) private var dismiss
+
+    @State private var mealType: MealType = .breakfast
+    @State private var foodName = ""
+    @State private var grams = ""
+    @State private var protein = ""
+    @State private var carbs = ""
+    @State private var fat = ""
+
+    let onSave: (MealType, String, Double, Double, Double, Double) -> Void
+
+    var body: some View {
+        NavigationStack {
+            Form {
+                Section("食物") {
+                    Picker("餐次", selection: $mealType) {
+                        ForEach(MealType.allCases) { meal in
+                            Text(meal.displayName).tag(meal)
+                        }
+                    }
+
+                    TextField("食物名称，例如 鸡蛋", text: $foodName)
+                    TextField("食用重量 g，例如 100", text: $grams)
+                        .keyboardType(.decimalPad)
+                }
+
+                Section("每 100g 营养") {
+                    TextField("蛋白质 g，例如 13", text: $protein)
+                        .keyboardType(.decimalPad)
+                    TextField("碳水 g，例如 1.1", text: $carbs)
+                        .keyboardType(.decimalPad)
+                    TextField("脂肪 g，例如 10", text: $fat)
+                        .keyboardType(.decimalPad)
+                }
+
+                Section {
+                    Text("可参考食品包装营养成分表或常见食物数据库填写。结果为估算值，不构成医学建议。")
+                        .font(VBFont.body)
+                        .foregroundStyle(Color.vbSecondaryText)
+                }
+            }
+            .navigationTitle("记录饮食")
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+                ToolbarItem(placement: .cancellationAction) {
+                    Button("取消") { dismiss() }
+                        .font(VBFont.body)
+                }
+                ToolbarItem(placement: .confirmationAction) {
+                    Button("保存") {
+                        onSave(
+                            mealType,
+                            foodName,
+                            parsed(grams),
+                            parsed(protein),
+                            parsed(carbs),
+                            parsed(fat)
+                        )
+                    }
+                    .font(VBFont.body)
+                    .disabled(!canSave)
+                }
+            }
+        }
+    }
+
+    private var canSave: Bool {
+        !foodName.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
+            && parsed(grams) > 0
+    }
+
+    private func parsed(_ text: String) -> Double {
+        Double(text.replacingOccurrences(of: ",", with: ".")) ?? 0
+    }
+}
+
+// MARK: - Preview
+
+#Preview("Nutrition View") {
+    NutritionView()
+}
