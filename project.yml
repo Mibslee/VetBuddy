@@ -45,6 +45,8 @@ targets:
         CODE_SIGN_ENTITLEMENTS: VetBuddy.entitlements
         PRODUCT_BUNDLE_IDENTIFIER: com.shanestudio.VetBuddy
         ASSETCATALOG_COMPILER_APPICON_NAME: AppIcon
+        DEVELOPMENT_TEAM: VHL4P85M5X
+        CODE_SIGN_STYLE: Automatic
 
   VetBuddyTests:
     type: bundle.unit-test

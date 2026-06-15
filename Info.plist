@@ -40,11 +40,6 @@
         <string>UIInterfaceOrientationLandscapeLeft</string>
         <string>UIInterfaceOrientationLandscapeRight</string>
     </array>
-    <key>UIRequiredDeviceCapabilities</key>
-    <array>
-        <string>iphone-ipad-minimum-deployment-target</string>
-    </array>
-
     <!-- HealthKit -->
     <key>NSHealthShareUsageDescription</key>
     <string>老铁 VetBuddy 需要读取您的步数、心率和体重，帮您记录每天的运动情况，生成健康报告。数据仅保存在您的手机本地，不会上传或分享给任何人。</string>
