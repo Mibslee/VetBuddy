@@ -10,6 +10,11 @@ struct TrainingCompleteView: View {
     let totalExercises: Int
 
     @State private var showPoster = false
+    @State private var selectedEffort: TrainingEffort = .justRight
+    @State private var selectedDiscomfort: TrainingDiscomfort = .none
+    @State private var feedbackSaved = false
+
+    private let feedbackStore = TrainingFeedbackStore()
 
     var body: some View {
         ScrollView {
@@ -19,6 +24,7 @@ struct TrainingCompleteView: View {
                 successIcon
                 successMessage
                 statsCard
+                feedbackCard
                 actionButtons
 
                 Spacer(minLength: 40)
@@ -102,20 +108,87 @@ struct TrainingCompleteView: View {
     private var actionButtons: some View {
         VStack(spacing: 16) {
             BigButton("打卡") {
+                saveFeedback()
                 router.selectedTab = .home
             }
 
             BigButton("生成海报", style: .secondary) {
+                saveFeedback()
                 showPoster = true
             }
 
             Button("返回首页") {
+                saveFeedback()
                 router.selectedTab = .home
             }
             .font(VBFont.body)
             .foregroundStyle(Color.vbSecondaryText)
             .frame(minHeight: 60)
         }
+    }
+
+    private var feedbackCard: some View {
+        VStack(alignment: .leading, spacing: 14) {
+            HStack(spacing: 10) {
+                Image(systemName: "slider.horizontal.3")
+                    .font(.system(size: 24))
+                    .foregroundStyle(Color.vbAccent)
+                Text("今天练完感觉")
+                    .vbHeadline()
+                Spacer()
+                if feedbackSaved {
+                    Text("已记录")
+                        .font(VBFont.caption)
+                        .foregroundStyle(Color.vbSuccess)
+                }
+            }
+
+            Picker("强度", selection: $selectedEffort) {
+                ForEach(TrainingEffort.allCases) { effort in
+                    Text(effort.displayName).tag(effort)
+                }
+            }
+            .pickerStyle(.segmented)
+
+            Picker("不适", selection: $selectedDiscomfort) {
+                ForEach(TrainingDiscomfort.allCases) { discomfort in
+                    Text(discomfort.displayName).tag(discomfort)
+                }
+            }
+            .pickerStyle(.menu)
+            .frame(maxWidth: .infinity, minHeight: 48, alignment: .leading)
+
+            feedbackHint
+        }
+        .padding(18)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .background(Color.vbCardBackground)
+        .clipShape(RoundedRectangle(cornerRadius: 16, style: .continuous))
+        .onChange(of: selectedEffort) { _, _ in feedbackSaved = false }
+        .onChange(of: selectedDiscomfort) { _, _ in feedbackSaved = false }
+    }
+
+    @ViewBuilder
+    private var feedbackHint: some View {
+        if selectedEffort == .tooHard || selectedDiscomfort != .none {
+            Text("下次训练会优先提醒降低强度；如有胸闷、头晕、明显疼痛，请停止训练并咨询医生。")
+                .font(VBFont.caption)
+                .foregroundStyle(Color.vbWarning)
+        } else {
+            Text("记录感受后，后续可以用于调整训练强度。")
+                .font(VBFont.caption)
+                .foregroundStyle(Color.vbSecondaryText)
+        }
+    }
+
+    private func saveFeedback() {
+        feedbackStore.save(
+            TrainingFeedback(
+                effort: selectedEffort,
+                discomfort: selectedDiscomfort
+            )
+        )
+        feedbackSaved = true
     }
 
     // MARK: - Helpers

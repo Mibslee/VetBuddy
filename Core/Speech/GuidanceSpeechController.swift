@@ -14,6 +14,7 @@ final class GuidanceSpeechController: NSObject, ObservableObject {
     }
 
     func toggle(text: String, voiceAssetName: String? = nil) {
+        guard UserAppSettings.soundEnabled else { return }
         if synthesizer.isSpeaking || audioPlayer?.isPlaying == true {
             stop()
         } else {
@@ -35,7 +36,7 @@ final class GuidanceSpeechController: NSObject, ObservableObject {
 
         let utterance = AVSpeechUtterance(string: text)
         utterance.voice = AVSpeechSynthesisVoice(language: "zh-CN")
-        utterance.rate = 0.43
+        utterance.rate = Float(UserAppSettings.speechRate)
         utterance.pitchMultiplier = 1.0
         utterance.volume = 1.0
         isSpeaking = true

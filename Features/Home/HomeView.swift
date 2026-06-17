@@ -12,6 +12,7 @@ struct HomeView: View {
             ScrollView {
                 VStack(spacing: 24) {
                     greetingSection
+                    todayActionPanel
                     if viewModel.isTrainingLocked {
                         redFlagTrainingCard
                     } else {
@@ -19,7 +20,6 @@ struct HomeView: View {
                     }
                     streakSection
                     healthSummaryCard
-                    startTrainingButton
                     recentCheckinsSection
                 }
                 .padding(.horizontal, 20)
@@ -36,6 +36,71 @@ struct HomeView: View {
                 }
             }
         }
+    }
+
+    // MARK: - Today Actions
+
+    private var todayActionPanel: some View {
+        VStack(alignment: .leading, spacing: 16) {
+            HStack(spacing: 10) {
+                Image(systemName: "checklist.checked")
+                    .font(.system(size: 26))
+                    .foregroundStyle(Color.vbAccent)
+                Text("今日行动")
+                    .vbHeadline()
+                Spacer()
+            }
+
+            Text(viewModel.nextTrainingHint)
+                .vbBody()
+                .foregroundStyle(Color.vbSecondaryText)
+
+            HStack(spacing: 10) {
+                actionButton(
+                    title: viewModel.isTrainingLocked ? "饮食建议" : (viewModel.hasAssessment ? "开始训练" : "先做评估"),
+                    icon: viewModel.isTrainingLocked ? "leaf.fill" : "figure.walk",
+                    filled: true
+                ) {
+                    if viewModel.isTrainingLocked {
+                        router.selectedTab = .nutrition
+                    } else if viewModel.hasAssessment {
+                        router.navigateToTraining()
+                    } else {
+                        router.showOnboardingFlow()
+                    }
+                }
+
+                actionButton(title: "记一餐", icon: "fork.knife", filled: false) {
+                    router.selectedTab = .nutrition
+                }
+
+                actionButton(title: "录健康", icon: "square.and.pencil", filled: false) {
+                    showManualHealthInput = true
+                }
+            }
+        }
+        .padding(18)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .background(Color.vbCardBackground)
+        .clipShape(RoundedRectangle(cornerRadius: 16, style: .continuous))
+    }
+
+    private func actionButton(title: String, icon: String, filled: Bool, action: @escaping () -> Void) -> some View {
+        Button(action: action) {
+            VStack(spacing: 6) {
+                Image(systemName: icon)
+                    .font(.system(size: 22, weight: .semibold))
+                Text(title)
+                    .font(VBFont.caption)
+                    .lineLimit(1)
+                    .minimumScaleFactor(0.8)
+            }
+            .foregroundStyle(filled ? .white : Color.vbAccent)
+            .frame(maxWidth: .infinity, minHeight: 76)
+            .background(filled ? Color.vbAccent : Color.vbAccent.opacity(0.08))
+            .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
+        }
+        .buttonStyle(.plain)
     }
 
     // MARK: - Greeting

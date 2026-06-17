@@ -9,6 +9,7 @@ final class NutritionViewModel: ObservableObject {
     @Published var isRedFlag: Bool = false
     @Published var dietEntries: [DietLogEntry] = []
     @Published var dietAnalysis: DietMacroAnalysis?
+    @Published var recentDietEntries: [DietLogEntry] = []
     @Published var recipeSetIndex: Int = 0
     @Published var dailyFocusIndex: Int = 0
 
@@ -117,6 +118,26 @@ final class NutritionViewModel: ObservableObject {
         reloadDietEntries()
     }
 
+    func repeatDietEntry(_ entry: DietLogEntry, mealType: MealType? = nil) {
+        let repeated = DietLogEntry(
+            mealType: mealType ?? entry.mealType,
+            foodName: entry.foodName,
+            grams: entry.grams,
+            proteinPer100g: entry.proteinPer100g,
+            carbsPer100g: entry.carbsPer100g,
+            fatPer100g: entry.fatPer100g
+        )
+        dietStore.addEntry(repeated)
+        reloadDietEntries()
+    }
+
+    func repeatYesterdayMeal(_ mealType: MealType) {
+        guard let yesterday = Calendar.current.date(byAdding: .day, value: -1, to: Date()) else { return }
+        let source = dietStore.loadEntries(for: yesterday, mealType: mealType)
+        dietStore.repeatEntries(source)
+        reloadDietEntries()
+    }
+
     func deleteDietEntry(_ entry: DietLogEntry) {
         dietStore.deleteEntry(id: entry.id)
         reloadDietEntries()
@@ -124,6 +145,7 @@ final class NutritionViewModel: ObservableObject {
 
     func reloadDietEntries() {
         dietEntries = dietStore.loadEntries()
+        recentDietEntries = dietStore.recentFoodEntries()
         if let requirements = advice?.requirements {
             dietAnalysis = DietAnalyzer.analyze(entries: dietEntries, requirements: requirements)
         } else {

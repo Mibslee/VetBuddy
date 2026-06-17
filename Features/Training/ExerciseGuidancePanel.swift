@@ -13,22 +13,24 @@ struct ExerciseGuidancePanel: View {
 
                 Spacer()
 
-                Button {
-                    speechController.toggle(
-                        text: exercise.spokenGuidanceText,
-                        voiceAssetName: "voice_\(exercise.id)"
-                    )
-                } label: {
-                    Label(
-                        speechController.isSpeaking ? "关闭语音" : "语音朗读",
-                        systemImage: speechController.isSpeaking ? "speaker.slash.fill" : "speaker.wave.2.fill"
-                    )
-                    .font(VBFont.body)
-                    .foregroundStyle(speechController.isSpeaking ? Color.vbSecondaryText : Color.vbAccent)
+                if UserAppSettings.safetyVoiceEnabled {
+                    Button {
+                        speechController.toggle(
+                            text: exercise.spokenGuidanceText,
+                            voiceAssetName: "voice_\(exercise.id)"
+                        )
+                    } label: {
+                        Label(
+                            speechController.isSpeaking ? "关闭语音" : "语音朗读",
+                            systemImage: speechController.isSpeaking ? "speaker.slash.fill" : "speaker.wave.2.fill"
+                        )
+                        .font(VBFont.body)
+                        .foregroundStyle(speechController.isSpeaking ? Color.vbSecondaryText : Color.vbAccent)
+                    }
+                    .buttonStyle(.plain)
+                    .frame(minHeight: 44)
+                    .accessibilityLabel(speechController.isSpeaking ? "关闭动作语音朗读" : "朗读动作要点和注意事项")
                 }
-                .buttonStyle(.plain)
-                .frame(minHeight: 44)
-                .accessibilityLabel(speechController.isSpeaking ? "关闭动作语音朗读" : "朗读动作要点和注意事项")
             }
 
             guidanceSection(

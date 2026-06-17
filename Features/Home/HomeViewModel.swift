@@ -9,9 +9,11 @@ final class HomeViewModel: ObservableObject {
     @Published var healthSummary: DailySummary?
     @Published var healthKitStatus: HealthKitPermissionStatus = .notDetermined
     @Published var recentCheckins: [DailyCheckin] = []
+    @Published var latestFeedback: TrainingFeedback?
 
     private let planService = TrainingPlanService()
     private let recordStore = TrainingRecordStore.shared
+    private let feedbackStore = TrainingFeedbackStore()
     private let healthKitService: HealthKitService
     private let permissionManager: HealthKitPermissionManager
     private let assessmentService: AssessmentService
@@ -33,6 +35,9 @@ final class HomeViewModel: ObservableObject {
         await loadStreak()
         await loadRecentCheckins()
         await refreshHealthData()
+        await MainActor.run {
+            latestFeedback = feedbackStore.latest()
+        }
     }
 
     func loadTodayPlan() async {
@@ -115,6 +120,25 @@ final class HomeViewModel: ObservableObject {
 
     var targetDuration: Int {
         todayPlan?.targetDurationMinutes ?? 0
+    }
+
+    var nextTrainingHint: String {
+        guard let latestFeedback else {
+            return "按计划完成即可，任何不适都可以跳过动作。"
+        }
+        if latestFeedback.discomfort == .dizzy {
+            return "上次记录头晕。今天训练前先确认状态，必要时暂停并咨询医生。"
+        }
+        if latestFeedback.discomfort != .none {
+            return "上次记录\(latestFeedback.discomfort.displayName)。今天降低强度，相关动作不舒服就跳过。"
+        }
+        if latestFeedback.effort == .tooHard {
+            return "上次感觉太累。今天建议慢一点，组间休息可以更长。"
+        }
+        if latestFeedback.effort == .easy {
+            return "上次感觉轻松。今天保持稳定完成，不急着加量。"
+        }
+        return "上次强度正好。今天按当前计划继续。"
     }
 
     var greetingText: String {

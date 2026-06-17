@@ -7,6 +7,9 @@ final class ProfileViewModel: ObservableObject {
     @Published var assessment: AssessmentResult?
     @Published var healthKitStatus: HealthKitPermissionStatus = .notDetermined
     @Published var soundEnabled: Bool = true
+    @Published var rhythmVoiceEnabled: Bool = true
+    @Published var safetyVoiceEnabled: Bool = true
+    @Published var speechRate: Double = 0.43
 
     private let assessmentService: AssessmentService
     private let permissionManager: HealthKitPermissionManager
@@ -22,11 +25,10 @@ final class ProfileViewModel: ObservableObject {
     func loadProfile() {
         assessment = assessmentService.loadLatestAssessment()
         healthKitStatus = permissionManager.checkCurrentStatus()
-        if UserDefaults.standard.object(forKey: Keys.soundEnabled) == nil {
-            soundEnabled = true
-        } else {
-            soundEnabled = UserDefaults.standard.bool(forKey: Keys.soundEnabled)
-        }
+        soundEnabled = UserAppSettings.soundEnabled
+        rhythmVoiceEnabled = UserAppSettings.rhythmVoiceEnabled
+        safetyVoiceEnabled = UserAppSettings.safetyVoiceEnabled
+        speechRate = UserAppSettings.speechRate
     }
 
     func resetAssessment() {
@@ -36,7 +38,22 @@ final class ProfileViewModel: ObservableObject {
 
     func toggleSound() {
         soundEnabled.toggle()
-        UserDefaults.standard.set(soundEnabled, forKey: Keys.soundEnabled)
+        UserAppSettings.soundEnabled = soundEnabled
+    }
+
+    func toggleRhythmVoice() {
+        rhythmVoiceEnabled.toggle()
+        UserAppSettings.rhythmVoiceEnabled = rhythmVoiceEnabled
+    }
+
+    func toggleSafetyVoice() {
+        safetyVoiceEnabled.toggle()
+        UserAppSettings.safetyVoiceEnabled = safetyVoiceEnabled
+    }
+
+    func setSpeechRate(_ rate: Double) {
+        speechRate = rate
+        UserAppSettings.speechRate = rate
     }
 
     func requestHealthKit() async {
@@ -82,9 +99,4 @@ final class ProfileViewModel: ObservableObject {
         }
     }
 
-    // MARK: - Keys
-
-    private enum Keys {
-        static let soundEnabled = "vb_sound_enabled"
-    }
 }

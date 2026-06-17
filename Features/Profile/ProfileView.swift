@@ -132,25 +132,68 @@ struct ProfileView: View {
 
     private var settingsSection: some View {
         VStack(spacing: 0) {
-            HStack {
-                Image(systemName: "speaker.wave.2.fill")
-                    .foregroundStyle(Color.vbAccent)
-                    .frame(width: 32)
-                Text("音效")
-                    .vbBody()
-                Spacer()
-                Toggle("", isOn: Binding(
-                    get: { viewModel.soundEnabled },
-                    set: { _ in viewModel.toggleSound() }
-                ))
-                .labelsHidden()
+            settingToggleRow(
+                icon: "speaker.wave.2.fill",
+                title: "语音总开关",
+                isOn: viewModel.soundEnabled,
+                action: viewModel.toggleSound
+            )
+            Divider().padding(.leading, 52)
+            settingToggleRow(
+                icon: "metronome.fill",
+                title: "训练节奏语音",
+                isOn: viewModel.rhythmVoiceEnabled,
+                action: viewModel.toggleRhythmVoice
+            )
+            Divider().padding(.leading, 52)
+            settingToggleRow(
+                icon: "list.bullet.clipboard.fill",
+                title: "注意事项语音",
+                isOn: viewModel.safetyVoiceEnabled,
+                action: viewModel.toggleSafetyVoice
+            )
+            Divider().padding(.leading, 52)
+            VStack(alignment: .leading, spacing: 10) {
+                HStack {
+                    Image(systemName: "speedometer")
+                        .foregroundStyle(Color.vbAccent)
+                        .frame(width: 32)
+                    Text("语速")
+                        .vbBody()
+                    Spacer()
+                    Text(viewModel.speechRate < 0.43 ? "慢" : "标准")
+                        .vbBody()
+                        .foregroundStyle(Color.vbSecondaryText)
+                }
+                Slider(
+                    value: Binding(
+                        get: { viewModel.speechRate },
+                        set: { viewModel.setSpeechRate($0) }
+                    ),
+                    in: 0.34...0.48
+                )
                 .tint(Color.vbAccent)
             }
             .padding(20)
-            .frame(minHeight: 60)
         }
         .background(Color.vbCardBackground)
         .clipShape(RoundedRectangle(cornerRadius: 16, style: .continuous))
+    }
+
+    private func settingToggleRow(icon: String, title: String, isOn: Bool, action: @escaping () -> Void) -> some View {
+        HStack {
+            Image(systemName: icon)
+                .foregroundStyle(Color.vbAccent)
+                .frame(width: 32)
+            Text(title)
+                .vbBody()
+            Spacer()
+            Toggle("", isOn: Binding(get: { isOn }, set: { _ in action() }))
+                .labelsHidden()
+                .tint(Color.vbAccent)
+        }
+        .padding(20)
+        .frame(minHeight: 60)
     }
 
     // MARK: - About Section

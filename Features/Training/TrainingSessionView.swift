@@ -339,7 +339,10 @@ private struct ExerciseRhythmGuidancePanel: View {
             Spacer()
 
             Button {
-                speechController.toggle(text: exercise.rhythmGuidanceText)
+                speechController.toggle(
+                    text: exercise.rhythmGuidanceText,
+                    voiceAssetName: "rhythm_\(exercise.id)"
+                )
             } label: {
                 Image(systemName: speechController.isSpeaking ? "speaker.slash.fill" : "speaker.wave.2.fill")
                     .font(.system(size: 20, weight: .semibold))
@@ -354,6 +357,8 @@ private struct ExerciseRhythmGuidancePanel: View {
         .frame(maxWidth: .infinity, alignment: .leading)
         .background(Color.vbCardBackground)
         .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
+        .opacity(UserAppSettings.rhythmVoiceEnabled ? 1 : 0.55)
+        .allowsHitTesting(UserAppSettings.rhythmVoiceEnabled)
     }
 }
 

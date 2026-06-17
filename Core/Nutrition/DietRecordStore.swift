@@ -164,9 +164,45 @@ struct DietRecordStore {
             .sorted { $0.date > $1.date }
     }
 
+    func loadEntries(for date: Date = Date(), mealType: MealType) -> [DietLogEntry] {
+        loadEntries(for: date).filter { $0.mealType == mealType }
+    }
+
+    func recentFoodEntries(limit: Int = 6) -> [DietLogEntry] {
+        var seen: Set<String> = []
+        var result: [DietLogEntry] = []
+        for entry in loadAllEntries().sorted(by: { $0.date > $1.date }) {
+            let key = entry.foodName + "|" + String(format: "%.1f", entry.grams)
+            guard !seen.contains(key) else { continue }
+            seen.insert(key)
+            result.append(entry)
+            if result.count >= limit { break }
+        }
+        return result
+    }
+
     func addEntry(_ entry: DietLogEntry) {
         var entries = loadAllEntries()
         entries.append(entry)
+        save(entries)
+    }
+
+    func repeatEntries(_ sourceEntries: [DietLogEntry], date: Date = Date()) {
+        guard !sourceEntries.isEmpty else { return }
+        var entries = loadAllEntries()
+        entries.append(
+            contentsOf: sourceEntries.map { source in
+                DietLogEntry(
+                    date: date,
+                    mealType: source.mealType,
+                    foodName: source.foodName,
+                    grams: source.grams,
+                    proteinPer100g: source.proteinPer100g,
+                    carbsPer100g: source.carbsPer100g,
+                    fatPer100g: source.fatPer100g
+                )
+            }
+        )
         save(entries)
     }
 

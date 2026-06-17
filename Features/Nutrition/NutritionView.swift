@@ -46,8 +46,17 @@ struct NutritionView: View {
             .toolbar(.hidden, for: .navigationBar)
             .task { await viewModel.loadAdvice() }
             .sheet(isPresented: $showAddDietEntry) {
-                AddDietEntryView(commonFoods: viewModel.commonFoodOptions, onSaveFood: { food, mealType, servings in
+                AddDietEntryView(
+                    commonFoods: viewModel.commonFoodOptions,
+                    recentEntries: viewModel.recentDietEntries,
+                    onSaveFood: { food, mealType, servings in
                     viewModel.addFoodPortion(food, mealType: mealType, servings: servings)
+                    showAddDietEntry = false
+                }, onRepeatEntry: { entry in
+                    viewModel.repeatDietEntry(entry)
+                    showAddDietEntry = false
+                }, onRepeatYesterdayMeal: { mealType in
+                    viewModel.repeatYesterdayMeal(mealType)
                     showAddDietEntry = false
                 }, onSaveCustom: { mealType, foodName, grams, protein, carbs, fat in
                     viewModel.addDietEntry(
@@ -830,16 +839,25 @@ private struct AddDietEntryView: View {
     @State private var fat = ""
 
     let commonFoods: [CommonFoodPortion]
+    let recentEntries: [DietLogEntry]
     let onSaveFood: (CommonFoodPortion, MealType, Double) -> Void
+    let onRepeatEntry: (DietLogEntry) -> Void
+    let onRepeatYesterdayMeal: (MealType) -> Void
     let onSaveCustom: (MealType, String, Double, Double, Double, Double) -> Void
 
     init(
         commonFoods: [CommonFoodPortion],
+        recentEntries: [DietLogEntry],
         onSaveFood: @escaping (CommonFoodPortion, MealType, Double) -> Void,
+        onRepeatEntry: @escaping (DietLogEntry) -> Void,
+        onRepeatYesterdayMeal: @escaping (MealType) -> Void,
         onSaveCustom: @escaping (MealType, String, Double, Double, Double, Double) -> Void
     ) {
         self.commonFoods = commonFoods
+        self.recentEntries = recentEntries
         self.onSaveFood = onSaveFood
+        self.onRepeatEntry = onRepeatEntry
+        self.onRepeatYesterdayMeal = onRepeatYesterdayMeal
         self.onSaveCustom = onSaveCustom
         _selectedFoodID = State(initialValue: commonFoods.first?.id ?? "")
     }
@@ -854,6 +872,8 @@ private struct AddDietEntryView: View {
                 }
 
                 if !useCustomInput {
+                    recentFoodSection
+                    repeatYesterdaySection
                     quickFoodSection
                 }
 
@@ -892,6 +912,53 @@ private struct AddDietEntryView: View {
                     .disabled(!canSave)
                 }
             }
+        }
+    }
+
+    @ViewBuilder
+    private var recentFoodSection: some View {
+        if !recentEntries.isEmpty {
+            Section("最近常吃") {
+                ForEach(recentEntries.prefix(5)) { entry in
+                    Button {
+                        onRepeatEntry(entry)
+                    } label: {
+                        HStack {
+                            VStack(alignment: .leading, spacing: 3) {
+                                Text(entry.foodName)
+                                    .foregroundStyle(Color.vbMainText)
+                                Text("\(entry.mealType.displayName) · \(formatGrams(entry.grams))g · 蛋白 \(formatGrams(entry.proteinG))g")
+                                    .font(VBFont.caption)
+                                    .foregroundStyle(Color.vbSecondaryText)
+                            }
+                            Spacer()
+                            Image(systemName: "plus.circle.fill")
+                                .foregroundStyle(Color.vbAccent)
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    private var repeatYesterdaySection: some View {
+        Section {
+            Picker("复制昨天的", selection: $mealType) {
+                ForEach(MealType.allCases) { meal in
+                    Text(meal.displayName).tag(meal)
+                }
+            }
+
+            Button {
+                onRepeatYesterdayMeal(mealType)
+            } label: {
+                Label("添加昨天\(mealType.displayName)", systemImage: "clock.arrow.circlepath")
+                    .foregroundStyle(Color.vbAccent)
+            }
+        } header: {
+            Text("快速复制")
+        } footer: {
+            Text("如果昨天这一餐没有记录，点击后不会新增内容。")
         }
     }
 
