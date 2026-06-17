@@ -25,7 +25,8 @@ struct TrainingCompleteView: View {
             }
             .padding(.horizontal, 24)
         }
-        .background(Color.vbSuccess.opacity(0.05).ignoresSafeArea())
+        .background(Color.vbCream.ignoresSafeArea())
+        .preferredColorScheme(.light)
         .navigationBarBackButtonHidden(true)
         .navigationDestination(isPresented: $showPoster) {
             PosterPreviewView(

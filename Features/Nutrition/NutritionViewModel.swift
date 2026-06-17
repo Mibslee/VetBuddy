@@ -9,6 +9,8 @@ final class NutritionViewModel: ObservableObject {
     @Published var isRedFlag: Bool = false
     @Published var dietEntries: [DietLogEntry] = []
     @Published var dietAnalysis: DietMacroAnalysis?
+    @Published var recipeSetIndex: Int = 0
+    @Published var dailyFocusIndex: Int = 0
 
     private let assessmentService: AssessmentService
     private let healthKitService: HealthKitService
@@ -66,6 +68,30 @@ final class NutritionViewModel: ObservableObject {
             randomQuote: newQuote,
             requirements: current.requirements
         )
+    }
+
+    func refreshDailyNutritionContent() {
+        refreshQuote()
+        recipeSetIndex = (recipeSetIndex + 1) % NutritionDynamicContent.recipeSets.count
+        dailyFocusIndex = (dailyFocusIndex + 1) % NutritionDynamicContent.dailyFocusCards.count
+    }
+
+    var currentRecipeSet: SeniorRecipeSet {
+        NutritionDynamicContent.recipeSets[recipeSetIndex % NutritionDynamicContent.recipeSets.count]
+    }
+
+    var currentDailyFocus: NutritionDailyFocus {
+        NutritionDynamicContent.dailyFocusCards[dailyFocusIndex % NutritionDynamicContent.dailyFocusCards.count]
+    }
+
+    var commonFoodOptions: [CommonFoodPortion] {
+        FoodPortionCatalog.commonFoods
+    }
+
+    func addFoodPortion(_ food: CommonFoodPortion, mealType: MealType, servings: Double) {
+        guard servings > 0 else { return }
+        dietStore.addEntry(food.entry(mealType: mealType, servings: servings))
+        reloadDietEntries()
     }
 
     func addDietEntry(

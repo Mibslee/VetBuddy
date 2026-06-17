@@ -45,9 +45,9 @@ enum PosterTemplate: String, CaseIterable, Identifiable {
 
     var backgroundImageName: String {
         switch self {
-        case .mountain: return "poster_mountain"
-        case .bamboo: return "poster_bamboo"
-        case .pine: return "poster_pine"
+        case .mountain: return "poster_bamboo"
+        case .bamboo: return "poster_pine"
+        case .pine: return "poster_mountain"
         case .crane: return "poster_crane"
         }
     }

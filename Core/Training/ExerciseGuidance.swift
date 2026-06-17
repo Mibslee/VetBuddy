@@ -82,6 +82,29 @@ extension Exercise {
         return sections.joined(separator: " ")
     }
 
+    var rhythmGuidanceText: String {
+        switch id {
+        case "sit_to_stand":
+            return "准备。身体微微前倾，三、二、一。缓慢起立，三、二、一。站稳保持，三、二、一。臀部向后，缓慢坐下，三、二、一。"
+        case "calf_raise":
+            return "准备扶稳。脚跟慢慢抬起，三、二、一。最高点停住，三、二、一。脚跟慢慢落下，三、二、一。"
+        case "wall_sit":
+            return "背部贴墙。慢慢下滑，三、二、一。保持呼吸，三、二、一。脚掌踩稳，慢慢站回，三、二、一。"
+        case "straight_leg_raise":
+            return "仰卧准备。收紧腹部，三、二、一。直腿慢慢抬起，三、二、一。控制放下，三、二、一。"
+        case "side_leg_raise":
+            return "侧卧对齐。上方腿慢慢抬起，三、二、一。保持稳定，三、二、一。慢慢落回，三、二、一。"
+        case "glute_bridge":
+            return "屈膝踩稳。臀部慢慢抬起，三、二、一。肩髋膝成一线，保持，三、二、一。慢慢落下，三、二、一。"
+        case "standing_march":
+            return "扶稳站直。右腿慢慢抬起，三、二、一。右脚踩稳。左腿慢慢抬起，三、二、一。左脚踩稳。"
+        case "tandem_walk":
+            return "靠墙准备。脚跟接脚尖，慢慢迈步，三、二、一。站稳再下一步，三、二、一。眼睛看前方，保持呼吸。"
+        default:
+            return "动作开始。保持缓慢稳定，三、二、一。控制返回，三、二、一。"
+        }
+    }
+
     private func appendSpokenSection(_ title: String, notes: [String], to sections: inout [String]) {
         guard !notes.isEmpty else { return }
         let text = notes.map { note in

@@ -200,6 +200,8 @@ struct TrainingSessionView: View {
 
                         currentExerciseSummary(exercise)
 
+                        ExerciseRhythmGuidancePanel(exercise: exercise.exercise)
+
                         ExerciseGuidancePanel(exercise: exercise.exercise)
                     }
                     .padding(.horizontal, 20)
@@ -312,6 +314,47 @@ struct TrainingSessionView: View {
         .accessibilityElement(children: .contain)
     }
 
+}
+
+private struct ExerciseRhythmGuidancePanel: View {
+    @StateObject private var speechController = GuidanceSpeechController()
+
+    let exercise: Exercise
+
+    var body: some View {
+        HStack(alignment: .center, spacing: 12) {
+            Image(systemName: "metronome.fill")
+                .font(.system(size: 24))
+                .foregroundStyle(Color.vbAccent)
+
+            VStack(alignment: .leading, spacing: 4) {
+                Text("训练节奏语音")
+                    .font(VBFont.headline)
+                    .foregroundStyle(Color.vbMainText)
+                Text("运动时播放“慢起、保持、慢落”的节奏倒数；注意事项仍在下方单独朗读。")
+                    .font(VBFont.caption)
+                    .foregroundStyle(Color.vbSecondaryText)
+            }
+
+            Spacer()
+
+            Button {
+                speechController.toggle(text: exercise.rhythmGuidanceText)
+            } label: {
+                Image(systemName: speechController.isSpeaking ? "speaker.slash.fill" : "speaker.wave.2.fill")
+                    .font(.system(size: 20, weight: .semibold))
+                    .foregroundStyle(.white)
+                    .frame(width: 46, height: 46)
+                    .background(Color.vbAccent)
+                    .clipShape(Circle())
+            }
+            .accessibilityLabel(speechController.isSpeaking ? "关闭节奏语音" : "播放节奏语音")
+        }
+        .padding(16)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .background(Color.vbCardBackground)
+        .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
+    }
 }
 
 // MARK: - Preview

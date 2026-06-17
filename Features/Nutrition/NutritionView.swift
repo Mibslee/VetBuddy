@@ -16,7 +16,7 @@ struct NutritionView: View {
                     }
 
                     if let advice = viewModel.advice {
-                        motivationalQuote(advice.randomQuote)
+                        nutritionTodayCard(advice)
                         if let req = advice.requirements {
                             nutritionRequirementsCard(req)
                         }
@@ -46,7 +46,10 @@ struct NutritionView: View {
             .toolbar(.hidden, for: .navigationBar)
             .task { await viewModel.loadAdvice() }
             .sheet(isPresented: $showAddDietEntry) {
-                AddDietEntryView { mealType, foodName, grams, protein, carbs, fat in
+                AddDietEntryView(commonFoods: viewModel.commonFoodOptions, onSaveFood: { food, mealType, servings in
+                    viewModel.addFoodPortion(food, mealType: mealType, servings: servings)
+                    showAddDietEntry = false
+                }, onSaveCustom: { mealType, foodName, grams, protein, carbs, fat in
                     viewModel.addDietEntry(
                         mealType: mealType,
                         foodName: foodName,
@@ -56,7 +59,7 @@ struct NutritionView: View {
                         fatPer100g: fat
                     )
                     showAddDietEntry = false
-                }
+                })
             }
         }
     }
@@ -233,13 +236,13 @@ struct NutritionView: View {
                 Image(systemName: "list.clipboard.fill")
                     .font(.system(size: 26))
                     .foregroundStyle(Color.vbAccent)
-                Text("今日饮食记录")
+                Text("饮食记录与分析")
                     .vbHeadline()
                 Spacer()
                 Button {
                     showAddDietEntry = true
                 } label: {
-                    Label("记录", systemImage: "plus")
+                    Label("添加食物", systemImage: "plus")
                         .font(VBFont.body)
                 }
                 .foregroundStyle(Color.vbAccent)
@@ -253,7 +256,7 @@ struct NutritionView: View {
             }
 
             if viewModel.dietEntries.isEmpty {
-                Text("还没有记录。添加今天吃过的食物后，老铁 VetBuddy 会按当前目标估算蛋白质、碳水和脂肪是否合适。")
+                Text("还没有记录。可以直接选择鸡蛋、牛奶、米饭、鱼肉等常见食物，系统会按份数自动估算蛋白质、碳水和脂肪。")
                     .vbBody()
                     .foregroundStyle(Color.vbSecondaryText)
             } else {
@@ -388,6 +391,51 @@ struct NutritionView: View {
         return String(format: "%.1f", value)
     }
 
+    private func nutritionTodayCard(_ advice: NutritionAdvice) -> some View {
+        let focus = viewModel.currentDailyFocus
+
+        return VStack(alignment: .leading, spacing: 14) {
+            HStack(spacing: 12) {
+                VStack(alignment: .leading, spacing: 6) {
+                    Text("「\(advice.randomQuote)」")
+                        .font(VBFont.headline)
+                        .foregroundStyle(Color.vbAccent)
+                        .italic()
+
+                    Text(focus.title)
+                        .font(VBFont.title)
+                        .foregroundStyle(Color.vbMainText)
+
+                    Text(focus.subtitle)
+                        .vbBody()
+                        .foregroundStyle(Color.vbSecondaryText)
+                }
+
+                Spacer()
+
+                Button {
+                    viewModel.refreshDailyNutritionContent()
+                } label: {
+                    Image(systemName: "arrow.clockwise.circle.fill")
+                        .font(.system(size: 32))
+                        .foregroundStyle(Color.vbAccent)
+                        .frame(width: 48, height: 48)
+                }
+                .accessibilityLabel("换一组饮食建议")
+            }
+
+            VStack(alignment: .leading, spacing: 8) {
+                ForEach(focus.tips, id: \.self) { tip in
+                    compactTip(tip)
+                }
+            }
+        }
+        .padding(20)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .background(Color.vbCardBackground)
+        .clipShape(RoundedRectangle(cornerRadius: 16, style: .continuous))
+    }
+
     private func motivationalQuote(_ quote: String) -> some View {
         VStack(alignment: .leading, spacing: 14) {
             HStack(spacing: 12) {
@@ -409,17 +457,6 @@ struct NutritionView: View {
                 .accessibilityLabel("换一句")
             }
 
-            Button {
-                showAddDietEntry = true
-            } label: {
-                Label("记录饮食", systemImage: "plus.circle.fill")
-                    .font(VBFont.headline)
-                    .foregroundStyle(Color.vbAccent)
-                    .frame(maxWidth: .infinity, minHeight: 48)
-                    .background(Color.vbCream.opacity(0.65))
-                    .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
-            }
-            .buttonStyle(.plain)
         }
         .padding(20)
         .frame(maxWidth: .infinity, alignment: .leading)
@@ -430,16 +467,32 @@ struct NutritionView: View {
     // MARK: - Chinese Recipes
 
     private var chineseRecipeSection: some View {
-        VStack(alignment: .leading, spacing: 14) {
+        let recipeSet = viewModel.currentRecipeSet
+
+        return VStack(alignment: .leading, spacing: 14) {
             HStack(spacing: 10) {
                 Image(systemName: "menucard.fill")
                     .font(.system(size: 24))
                     .foregroundStyle(Color.vbAccent)
-                Text("适合中国老年人的食谱")
-                    .vbHeadline()
+                VStack(alignment: .leading, spacing: 2) {
+                    Text("适合中国老年人的食谱")
+                        .vbHeadline()
+                    Text(recipeSet.title)
+                        .vbCaption()
+                        .foregroundStyle(Color.vbSecondaryText)
+                }
+                Spacer()
+                Button {
+                    viewModel.refreshDailyNutritionContent()
+                } label: {
+                    Label("换一套", systemImage: "arrow.triangle.2.circlepath")
+                        .font(VBFont.caption)
+                        .foregroundStyle(Color.vbAccent)
+                }
+                .frame(minHeight: 36)
             }
 
-            ForEach(seniorRecipes) { recipe in
+            ForEach(recipeSet.meals) { recipe in
                 VStack(alignment: .leading, spacing: 8) {
                     HStack {
                         Text(recipe.title)
@@ -763,79 +816,58 @@ struct NutritionView: View {
     }
 }
 
-private struct SeniorRecipe: Identifiable {
-    let id = UUID()
-    let title: String
-    let tag: String
-    let items: String
-    let notes: String
-}
-
-private let seniorRecipes: [SeniorRecipe] = [
-    SeniorRecipe(
-        title: "软烂高蛋白早餐",
-        tag: "早餐",
-        items: "鸡蛋羹 + 无糖豆浆/牛奶 + 燕麦南瓜粥 + 焯青菜",
-        notes: "适合牙口一般、早晨胃口弱的人；粥里加蛋奶豆，比单喝白粥更有营养。"
-    ),
-    SeniorRecipe(
-        title: "家常均衡午餐",
-        tag: "午餐",
-        items: "清蒸鱼/鸡肉丸 + 半碗杂粮饭 + 番茄豆腐汤 + 两份时蔬",
-        notes: "鱼肉注意去刺，肉类切小块或做丸子；蔬菜一深一浅，颜色越丰富越好。"
-    ),
-    SeniorRecipe(
-        title: "清淡易消化晚餐",
-        tag: "晚餐",
-        items: "虾仁豆腐煲 + 山药/红薯 + 香菇青菜 + 少量水果",
-        notes: "晚餐不过量，主食不完全取消；睡前容易饿可选无糖酸奶或温牛奶。"
-    )
-]
-
 private struct AddDietEntryView: View {
     @Environment(\.dismiss) private var dismiss
 
     @State private var mealType: MealType = .breakfast
+    @State private var selectedFoodID: String
+    @State private var servings = "1"
+    @State private var useCustomInput = false
     @State private var foodName = ""
     @State private var grams = ""
     @State private var protein = ""
     @State private var carbs = ""
     @State private var fat = ""
 
-    let onSave: (MealType, String, Double, Double, Double, Double) -> Void
+    let commonFoods: [CommonFoodPortion]
+    let onSaveFood: (CommonFoodPortion, MealType, Double) -> Void
+    let onSaveCustom: (MealType, String, Double, Double, Double, Double) -> Void
+
+    init(
+        commonFoods: [CommonFoodPortion],
+        onSaveFood: @escaping (CommonFoodPortion, MealType, Double) -> Void,
+        onSaveCustom: @escaping (MealType, String, Double, Double, Double, Double) -> Void
+    ) {
+        self.commonFoods = commonFoods
+        self.onSaveFood = onSaveFood
+        self.onSaveCustom = onSaveCustom
+        _selectedFoodID = State(initialValue: commonFoods.first?.id ?? "")
+    }
 
     var body: some View {
         NavigationStack {
             Form {
-                Section("食物") {
-                    Picker("餐次", selection: $mealType) {
-                        ForEach(MealType.allCases) { meal in
-                            Text(meal.displayName).tag(meal)
-                        }
-                    }
-
-                    TextField("食物名称，例如 鸡蛋", text: $foodName)
-                    TextField("食用重量 g，例如 100", text: $grams)
-                        .keyboardType(.decimalPad)
-                }
-
-                Section("每 100g 营养") {
-                    TextField("蛋白质 g，例如 13", text: $protein)
-                        .keyboardType(.decimalPad)
-                    TextField("碳水 g，例如 1.1", text: $carbs)
-                        .keyboardType(.decimalPad)
-                    TextField("脂肪 g，例如 10", text: $fat)
-                        .keyboardType(.decimalPad)
-                }
-
                 Section {
-                    Text("可参考食品包装营养成分表或常见食物数据库填写。结果为估算值，不构成医学建议。")
-                        .font(VBFont.body)
-                        .foregroundStyle(Color.vbSecondaryText)
+                    Toggle("手动输入营养", isOn: $useCustomInput)
+                } footer: {
+                    Text("优先使用常见食物估算。包装食品或特殊食物再手动输入。")
+                }
+
+                if !useCustomInput {
+                    quickFoodSection
+                }
+
+                if useCustomInput {
+                    customFoodSection
                 }
             }
             .navigationTitle("记录饮食")
             .navigationBarTitleDisplayMode(.inline)
+            .onChange(of: selectedFoodID) { _, _ in
+                if let food = selectedFood {
+                    mealType = food.defaultMealType
+                }
+            }
             .toolbar {
                 ToolbarItem(placement: .cancellationAction) {
                     Button("取消") { dismiss() }
@@ -843,14 +875,18 @@ private struct AddDietEntryView: View {
                 }
                 ToolbarItem(placement: .confirmationAction) {
                     Button("保存") {
-                        onSave(
-                            mealType,
-                            foodName,
-                            parsed(grams),
-                            parsed(protein),
-                            parsed(carbs),
-                            parsed(fat)
-                        )
+                        if useCustomInput {
+                            onSaveCustom(
+                                mealType,
+                                foodName,
+                                parsed(grams),
+                                parsed(protein),
+                                parsed(carbs),
+                                parsed(fat)
+                            )
+                        } else if let food = selectedFood {
+                            onSaveFood(food, mealType, parsed(servings))
+                        }
                     }
                     .font(VBFont.body)
                     .disabled(!canSave)
@@ -859,13 +895,128 @@ private struct AddDietEntryView: View {
         }
     }
 
+    @ViewBuilder
+    private var quickFoodSection: some View {
+        Group {
+            Section("常见食物") {
+                Picker("食物", selection: $selectedFoodID) {
+                    ForEach(commonFoods) { food in
+                        Text(food.name).tag(food.id)
+                    }
+                }
+
+                Picker("餐次", selection: $mealType) {
+                    ForEach(MealType.allCases) { meal in
+                        Text(meal.displayName).tag(meal)
+                    }
+                }
+
+                TextField("份数，例如 1 或 0.5", text: $servings)
+                    .keyboardType(.decimalPad)
+            }
+
+            if let food = selectedFood {
+                Section {
+                    nutrientPreview(food)
+                } header: {
+                    Text("自动估算")
+                } footer: {
+                    Text(food.note + " 营养值为常见食物估算，实际以食材和烹调方式为准。")
+                }
+            }
+        }
+    }
+
+    @ViewBuilder
+    private var customFoodSection: some View {
+        Group {
+            Section("食物") {
+                Picker("餐次", selection: $mealType) {
+                    ForEach(MealType.allCases) { meal in
+                        Text(meal.displayName).tag(meal)
+                    }
+                }
+
+                TextField("食物名称，例如 鸡蛋", text: $foodName)
+                TextField("食用重量 g，例如 100", text: $grams)
+                    .keyboardType(.decimalPad)
+            }
+
+            Section("每 100g 营养") {
+                TextField("蛋白质 g，例如 13", text: $protein)
+                    .keyboardType(.decimalPad)
+                TextField("碳水 g，例如 1.1", text: $carbs)
+                    .keyboardType(.decimalPad)
+                TextField("脂肪 g，例如 10", text: $fat)
+                    .keyboardType(.decimalPad)
+            }
+
+            Section {
+                Text("可参考食品包装营养成分表或常见食物数据库填写。结果为估算值，不构成医学建议。")
+                    .font(VBFont.body)
+                    .foregroundStyle(Color.vbSecondaryText)
+            }
+        }
+    }
+
+    private func nutrientPreview(_ food: CommonFoodPortion) -> some View {
+        let count = parsed(servings)
+        let grams = food.gramsPerServing * max(count, 0)
+        let protein = grams * food.proteinPer100g / 100
+        let carbs = grams * food.carbsPer100g / 100
+        let fat = grams * food.fatPer100g / 100
+
+        return VStack(alignment: .leading, spacing: 10) {
+            HStack {
+                Text("\(food.servingName)约 \(formatGrams(food.gramsPerServing))g")
+                    .font(VBFont.headline)
+                Spacer()
+                Text("共 \(formatGrams(grams))g")
+                    .vbCaption()
+                    .foregroundStyle(Color.vbSecondaryText)
+            }
+
+            HStack(spacing: 12) {
+                previewMacro("蛋白", protein)
+                previewMacro("碳水", carbs)
+                previewMacro("脂肪", fat)
+            }
+        }
+    }
+
+    private func previewMacro(_ label: String, _ value: Double) -> some View {
+        VStack(spacing: 4) {
+            Text(formatGrams(value))
+                .font(VBFont.headline)
+                .foregroundStyle(Color.vbAccent)
+            Text(label + "g")
+                .font(VBFont.caption)
+                .foregroundStyle(Color.vbSecondaryText)
+        }
+        .frame(maxWidth: .infinity)
+    }
+
+    private var selectedFood: CommonFoodPortion? {
+        commonFoods.first { $0.id == selectedFoodID }
+    }
+
     private var canSave: Bool {
-        !foodName.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
-            && parsed(grams) > 0
+        if useCustomInput {
+            return !foodName.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
+                && parsed(grams) > 0
+        }
+        return selectedFood != nil && parsed(servings) > 0
     }
 
     private func parsed(_ text: String) -> Double {
         Double(text.replacingOccurrences(of: ",", with: ".")) ?? 0
+    }
+
+    private func formatGrams(_ value: Double) -> String {
+        if value.rounded() == value {
+            return String(format: "%.0f", value)
+        }
+        return String(format: "%.1f", value)
     }
 }
 
