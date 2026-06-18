@@ -60,8 +60,9 @@ struct ExerciseMistakesPanel: View {
         if let image = UIImage(named: mistake.imageName) {
             Image(uiImage: image)
                 .resizable()
-                .scaledToFill()
+                .scaledToFit()
                 .frame(width: 128, height: 132)
+                .background(Color.vbCream.opacity(0.62))
                 .clipShape(RoundedRectangle(cornerRadius: 8, style: .continuous))
                 .accessibilityHidden(true)
         } else {
