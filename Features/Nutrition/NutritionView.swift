@@ -16,19 +16,15 @@ struct NutritionView: View {
                     }
 
                     if let advice = viewModel.advice {
+                        dietTrackingSection
                         nutritionTodayCard(advice)
+                        chineseRecipeSection
+                        healthSwapSection(advice)
                         if let req = advice.requirements {
                             nutritionRequirementsCard(req)
                         }
-                        seniorPlateSection
-                        dietTrackingSection
-                        proteinTargetCard(advice)
-                        chineseRecipeSection
-                        healthSwapSection(advice)
-                        ckdTierCard(advice)
-                        preferredFoodsSection(advice)
-                        carbTipsSection(advice)
-                        sampleMealSection(advice)
+                        nutritionBasicsSection(advice)
+                        foodChoiceSection(advice)
                         postWorkoutTip(advice)
                         disclaimerSection(advice)
                     } else if viewModel.isLoading {
@@ -532,7 +528,7 @@ struct NutritionView: View {
                     .font(.system(size: 24))
                     .foregroundStyle(Color.vbAccent)
                 VStack(alignment: .leading, spacing: 2) {
-                    Text("适合中国老年人的食谱")
+                    Text("一日膳食参考")
                         .vbHeadline()
                     Text(recipeSet.title)
                         .vbCaption()
@@ -548,6 +544,11 @@ struct NutritionView: View {
                 }
                 .frame(minHeight: 36)
             }
+
+            Text(recipeSet.nutritionSummary)
+                .font(VBFont.caption)
+                .foregroundStyle(Color.vbAccent)
+                .fixedSize(horizontal: false, vertical: true)
 
             ForEach(recipeSet.meals) { recipe in
                 VStack(alignment: .leading, spacing: 8) {
@@ -572,11 +573,19 @@ struct NutritionView: View {
                     Text(recipe.notes)
                         .vbCaption()
                         .foregroundStyle(Color.vbSecondaryText)
+
+                    Text(recipe.nutritionEstimate)
+                        .vbCaption()
+                        .foregroundStyle(Color.vbAccent)
                 }
                 .padding(12)
                 .background(Color.vbSurfaceVariant.opacity(0.48))
                 .clipShape(RoundedRectangle(cornerRadius: 10, style: .continuous))
             }
+
+            Text(NutritionDynamicContent.sourceNote + " 营养值会随食材重量和烹调方式变化。")
+                .vbCaption()
+                .foregroundStyle(Color.vbSecondaryText)
         }
         .padding(16)
         .frame(maxWidth: .infinity, alignment: .leading)
@@ -628,59 +637,64 @@ struct NutritionView: View {
         return swaps
     }
 
-    // MARK: - Protein Target
+    // MARK: - Nutrition Basics
 
-    private func proteinTargetCard(_ advice: NutritionAdvice) -> some View {
-        VStack(spacing: 16) {
-            Image(systemName: "fork.knife")
-                .font(.system(size: 36))
-                .foregroundStyle(Color.vbAccent)
-
-            Text("每日蛋白质目标")
-                .vbHeadline()
-
-            Text(advice.proteinTarget)
-                .font(VBFont.hero)
-                .foregroundStyle(Color.vbAccent)
-
-            Text(advice.ckdTier.description)
-                .vbBody()
-                .foregroundStyle(Color.vbSecondaryText)
-                .multilineTextAlignment(.center)
-        }
-        .padding(24)
-        .frame(maxWidth: .infinity)
-        .background(Color.vbCardBackground)
-        .clipShape(RoundedRectangle(cornerRadius: 16, style: .continuous))
-    }
-
-    // MARK: - CKD Tier
-
-    private func ckdTierCard(_ advice: NutritionAdvice) -> some View {
-        HStack {
-            VStack(alignment: .leading, spacing: 8) {
-                Text("肾脏健康等级")
+    private func nutritionBasicsSection(_ advice: NutritionAdvice) -> some View {
+        VStack(alignment: .leading, spacing: 16) {
+            HStack(spacing: 10) {
+                Image(systemName: "circle.grid.cross.fill")
+                    .font(.system(size: 24))
+                    .foregroundStyle(Color.vbAccent)
+                Text("基础原则与蛋白目标")
                     .vbHeadline()
-                Text(advice.ckdTier.label)
-                    .vbBody()
+                Spacer()
+                Text("低优先级参考")
+                    .vbCaption()
                     .foregroundStyle(Color.vbSecondaryText)
             }
-            Spacer()
-            Text(advice.ckdTier.proteinRange + " " + advice.ckdTier.proteinUnit)
+
+            VStack(alignment: .leading, spacing: 6) {
+                Text("每日蛋白质目标")
+                    .vbCaption()
+                    .foregroundStyle(Color.vbSecondaryText)
+                Text(advice.proteinTarget)
                 .font(VBFont.headline)
                 .foregroundStyle(Color.vbAccent)
+                Text(advice.ckdTier.description)
+                    .vbCaption()
+                    .foregroundStyle(Color.vbSecondaryText)
+            }
+
+            HStack(spacing: 10) {
+                platePortion(title: "1/2", subtitle: "蔬菜 + 少量水果", color: Color.vbSuccess)
+                platePortion(title: "1/4", subtitle: "鱼禽蛋奶豆", color: Color.vbAccent)
+                platePortion(title: "1/4", subtitle: "全谷薯类主食", color: Color.vbDistantMountain)
+            }
+
+            VStack(alignment: .leading, spacing: 8) {
+                compactTip("每天尽量吃到 12 种以上食物，每周 25 种以上。")
+                compactTip("少盐少油，优先蒸、煮、炖、焯，少煎炸和重口味酱料。")
+                compactTip("牙口差时，把肉切碎、鱼去刺、蔬菜煮软。")
+                compactTip("肾脏健康等级：\(advice.ckdTier.label)，\(advice.ckdTier.proteinRange) \(advice.ckdTier.proteinUnit)。")
+            }
         }
         .padding(16)
+        .frame(maxWidth: .infinity, alignment: .leading)
         .background(Color.vbCardBackground)
         .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
     }
 
-    // MARK: - Preferred Foods
+    // MARK: - Food Choices
 
-    private func preferredFoodsSection(_ advice: NutritionAdvice) -> some View {
+    private func foodChoiceSection(_ advice: NutritionAdvice) -> some View {
         VStack(alignment: .leading, spacing: 16) {
-            Text("推荐食物")
-                .vbHeadline()
+            HStack(spacing: 10) {
+                Image(systemName: "fork.knife.circle.fill")
+                    .font(.system(size: 24))
+                    .foregroundStyle(Color.vbAccent)
+                Text("常见食物与替换")
+                    .vbHeadline()
+            }
 
             ForEach(advice.preferredFoods) { food in
                 HStack {
@@ -712,28 +726,8 @@ struct NutritionView: View {
                     Divider()
                 }
             }
-        }
-        .padding(16)
-        .frame(maxWidth: .infinity, alignment: .leading)
-        .background(Color.vbCardBackground)
-        .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
-    }
 
-    private func rankBadge(_ rank: Int) -> String {
-        switch rank {
-        case 1: return "1"
-        case 2: return "2"
-        case 3: return "3"
-        default: return "\(rank)"
-        }
-    }
-
-    // MARK: - Carb Tips
-
-    private func carbTipsSection(_ advice: NutritionAdvice) -> some View {
-        VStack(alignment: .leading, spacing: 16) {
-            Text("碳水替换建议")
-                .vbHeadline()
+            Divider()
 
             ForEach(advice.carbTips, id: \.avoid) { tip in
                 HStack(alignment: .top, spacing: 12) {
@@ -773,47 +767,12 @@ struct NutritionView: View {
         .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
     }
 
-    // MARK: - Sample Meal
-
-    private func sampleMealSection(_ advice: NutritionAdvice) -> some View {
-        VStack(alignment: .leading, spacing: 16) {
-            Text("一日膳食参考")
-                .vbHeadline()
-
-            mealRow(icon: "sunrise.fill", label: "早餐", slot: advice.sampleMeal.breakfast)
-            Divider()
-            mealRow(icon: "sun.max.fill", label: "午餐", slot: advice.sampleMeal.lunch)
-            Divider()
-            mealRow(icon: "leaf.fill", label: "加餐", slot: advice.sampleMeal.snack)
-            Divider()
-            mealRow(icon: "moon.fill", label: "晚餐", slot: advice.sampleMeal.dinner)
-        }
-        .padding(16)
-        .frame(maxWidth: .infinity, alignment: .leading)
-        .background(Color.vbCardBackground)
-        .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
-    }
-
-    private func mealRow(icon: String, label: String, slot: SampleDayMeal.MealSlot) -> some View {
-        HStack(alignment: .top, spacing: 12) {
-            VStack(spacing: 4) {
-                Image(systemName: icon)
-                    .font(.system(size: 22))
-                    .foregroundStyle(Color.vbAccent)
-                Text(label)
-                    .vbCaption()
-            }
-            .frame(width: 50)
-
-            VStack(alignment: .leading, spacing: 4) {
-                Text(slot.items)
-                    .vbBody()
-                Text("蛋白质: \(slot.protein)")
-                    .vbCaption()
-                    .foregroundStyle(Color.vbAccent)
-            }
-
-            Spacer()
+    private func rankBadge(_ rank: Int) -> String {
+        switch rank {
+        case 1: return "1"
+        case 2: return "2"
+        case 3: return "3"
+        default: return "\(rank)"
         }
     }
 

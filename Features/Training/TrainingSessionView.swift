@@ -200,8 +200,6 @@ struct TrainingSessionView: View {
 
                         currentExerciseSummary(exercise)
 
-                        ExerciseRhythmGuidancePanel(exercise: exercise.exercise)
-
                         ExerciseMistakesPanel(exercise: exercise.exercise)
 
                         ExerciseGuidancePanel(exercise: exercise.exercise)
@@ -259,6 +257,8 @@ struct TrainingSessionView: View {
                 exerciseStat(label: "休息", value: "\(exercise.restSeconds) 秒")
                 exerciseStat(label: "已跳过", value: "\(viewModel.skippedExerciseIndices.count)")
             }
+
+            ExerciseRhythmGuidancePanel(exercise: exercise.exercise, compact: true)
         }
         .padding(16)
         .frame(maxWidth: .infinity, alignment: .leading)
@@ -322,6 +322,12 @@ private struct ExerciseRhythmGuidancePanel: View {
     @StateObject private var speechController = GuidanceSpeechController()
 
     let exercise: Exercise
+    let compact: Bool
+
+    init(exercise: Exercise, compact: Bool = false) {
+        self.exercise = exercise
+        self.compact = compact
+    }
 
     var body: some View {
         HStack(alignment: .center, spacing: 12) {
@@ -333,9 +339,11 @@ private struct ExerciseRhythmGuidancePanel: View {
                 Text("训练节奏语音")
                     .font(VBFont.headline)
                     .foregroundStyle(Color.vbMainText)
-                Text("运动时播放“慢起、保持、慢落”的节奏倒数；注意事项仍在下方单独朗读。")
-                    .font(VBFont.caption)
-                    .foregroundStyle(Color.vbSecondaryText)
+                if !compact {
+                    Text("运动时播放“慢起、保持、慢落”的节奏倒数；注意事项仍在下方单独朗读。")
+                        .font(VBFont.caption)
+                        .foregroundStyle(Color.vbSecondaryText)
+                }
             }
 
             Spacer()
@@ -355,10 +363,10 @@ private struct ExerciseRhythmGuidancePanel: View {
             }
             .accessibilityLabel(speechController.isSpeaking ? "关闭节奏语音" : "播放节奏语音")
         }
-        .padding(16)
+        .padding(compact ? 12 : 16)
         .frame(maxWidth: .infinity, alignment: .leading)
-        .background(Color.vbCardBackground)
-        .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
+        .background(compact ? Color.vbCream.opacity(0.55) : Color.vbCardBackground)
+        .clipShape(RoundedRectangle(cornerRadius: compact ? 10 : 12, style: .continuous))
         .opacity(UserAppSettings.rhythmVoiceEnabled ? 1 : 0.55)
         .allowsHitTesting(UserAppSettings.rhythmVoiceEnabled)
     }
