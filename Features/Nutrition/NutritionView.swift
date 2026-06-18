@@ -50,25 +50,25 @@ struct NutritionView: View {
                     commonFoods: viewModel.commonFoodOptions,
                     recentEntries: viewModel.recentDietEntries,
                     onSaveFood: { food, mealType, servings in
-                    viewModel.addFoodPortion(food, mealType: mealType, servings: servings)
-                    showAddDietEntry = false
-                }, onRepeatEntry: { entry in
-                    viewModel.repeatDietEntry(entry)
-                    showAddDietEntry = false
-                }, onRepeatYesterdayMeal: { mealType in
-                    viewModel.repeatYesterdayMeal(mealType)
-                    showAddDietEntry = false
-                }, onSaveCustom: { mealType, foodName, grams, protein, carbs, fat in
-                    viewModel.addDietEntry(
-                        mealType: mealType,
-                        foodName: foodName,
-                        grams: grams,
-                        proteinPer100g: protein,
-                        carbsPer100g: carbs,
-                        fatPer100g: fat
-                    )
-                    showAddDietEntry = false
-                })
+                        viewModel.addFoodPortion(food, mealType: mealType, servings: servings)
+                        showAddDietEntry = false
+                    }, onRepeatEntry: { entry in
+                        viewModel.repeatDietEntry(entry)
+                        showAddDietEntry = false
+                    }, onRepeatYesterdayMeal: { mealType in
+                        viewModel.repeatYesterdayMeal(mealType)
+                        showAddDietEntry = false
+                    }, onSaveCustom: { mealType, foodName, grams, protein, carbs, fat in
+                        viewModel.addDietEntry(
+                            mealType: mealType,
+                            foodName: foodName,
+                            grams: grams,
+                            proteinPer100g: protein,
+                            carbsPer100g: carbs,
+                            fatPer100g: fat
+                        )
+                        showAddDietEntry = false
+                    })
             }
         }
     }
@@ -264,6 +264,22 @@ struct NutritionView: View {
                 missingWeightCard
             }
 
+            if let notice = viewModel.dietNotice {
+                HStack(alignment: .top, spacing: 8) {
+                    Image(systemName: "checkmark.circle.fill")
+                        .foregroundStyle(Color.vbSuccess)
+                        .font(.system(size: 18, weight: .semibold))
+                        .padding(.top, 2)
+                    Text(notice)
+                        .font(VBFont.caption)
+                        .foregroundStyle(Color.vbSecondaryText)
+                }
+                .padding(12)
+                .frame(maxWidth: .infinity, alignment: .leading)
+                .background(Color.vbSuccess.opacity(0.08))
+                .clipShape(RoundedRectangle(cornerRadius: 10, style: .continuous))
+            }
+
             if viewModel.dietEntries.isEmpty {
                 Text("还没有记录。可以直接选择鸡蛋、牛奶、米饭、鱼肉等常见食物，系统会按份数自动估算蛋白质、碳水和脂肪。")
                     .vbBody()
@@ -299,6 +315,20 @@ struct NutritionView: View {
             ForEach(analysis.nutrients, id: \.name) { nutrient in
                 macroAnalysisRow(nutrient)
             }
+
+            VStack(alignment: .leading, spacing: 6) {
+                Text("下一餐参考")
+                    .font(VBFont.caption)
+                    .foregroundStyle(Color.vbSecondaryText)
+                Text(macroGapText(analysis))
+                    .font(VBFont.body)
+                    .foregroundStyle(Color.vbMainText)
+                    .fixedSize(horizontal: false, vertical: true)
+            }
+            .padding(12)
+            .frame(maxWidth: .infinity, alignment: .leading)
+            .background(Color.vbCardBackground.opacity(0.7))
+            .clipShape(RoundedRectangle(cornerRadius: 10, style: .continuous))
 
             Text(analysis.message)
                 .vbBody()
@@ -357,6 +387,24 @@ struct NutritionView: View {
                 .background(statusColor(nutrient.status))
                 .clipShape(Capsule())
         }
+    }
+
+    private func macroGapText(_ analysis: DietMacroAnalysis) -> String {
+        let gaps = analysis.nutrients.compactMap { nutrient -> String? in
+            let delta = Double(nutrient.targetG) - nutrient.actualG
+            if delta > 5 {
+                return "\(nutrient.name)还差约 \(formatGrams(delta))g"
+            }
+            if delta < -5 {
+                return "\(nutrient.name)已超约 \(formatGrams(abs(delta)))g"
+            }
+            return nil
+        }
+
+        if gaps.isEmpty {
+            return "今天主要营养基本贴近目标，下一餐保持清淡均衡即可。"
+        }
+        return gaps.joined(separator: "，") + "。"
     }
 
     private func dietEntryRow(_ entry: DietLogEntry) -> some View {
@@ -958,7 +1006,7 @@ private struct AddDietEntryView: View {
         } header: {
             Text("快速复制")
         } footer: {
-            Text("如果昨天这一餐没有记录，点击后不会新增内容。")
+            Text("如果昨天这一餐没有记录，返回后会在饮食页提示。")
         }
     }
 

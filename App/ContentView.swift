@@ -111,7 +111,7 @@ private struct TrainingTabView: View {
                     VStack(alignment: .leading, spacing: 4) {
                         Text("今日计划")
                             .vbHeadline()
-                        Text("\(plan.exercises.count) 个动作 · \(plan.targetDurationMinutes) 分钟")
+                        Text("\(plan.exercises.count) 个动作 · \(plan.targetDurationMinutes) 分钟 · \(viewModel.planModeText)")
                             .vbCaption()
                             .foregroundStyle(Color.vbSecondaryText)
                     }
@@ -127,6 +127,22 @@ private struct TrainingTabView: View {
                         .clipShape(Capsule())
                 }
                 .padding(.horizontal, 2)
+
+                if viewModel.usesLightTrainingMode {
+                    HStack(alignment: .top, spacing: 8) {
+                        Image(systemName: "leaf.fill")
+                            .foregroundStyle(Color.vbSuccess)
+                            .font(.system(size: 18, weight: .semibold))
+                            .padding(.top, 2)
+                        Text("上次训练反馈提示需要放轻一点。今天已减少组数、降低次数并延长休息。")
+                            .font(VBFont.caption)
+                            .foregroundStyle(Color.vbSecondaryText)
+                    }
+                    .padding(12)
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                    .background(Color.vbSuccess.opacity(0.08))
+                    .clipShape(RoundedRectangle(cornerRadius: 10, style: .continuous))
+                }
 
                 LazyVGrid(columns: columns, spacing: 10) {
                     ForEach(Array(plan.exercises.enumerated()), id: \.element.id) { index, planned in

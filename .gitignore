@@ -19,8 +19,12 @@ AppStore_Submission*.zip
 
 # Private voice material and generated voice packs
 voice_gen/
-Resources/Voice/
 Tools/mimo_voiceclone.py
+Resources/Voice/*
+!Resources/Voice/README.md
+!Resources/Voice/Generated/
+Resources/Voice/Generated/*
+!Resources/Voice/Generated/.gitkeep
 
 # Personal or licensed media assets are intentionally not published in source-only repo.
 *.png

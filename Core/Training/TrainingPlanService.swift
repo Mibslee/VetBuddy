@@ -115,6 +115,28 @@ func generateDailyPlan(for level: FitnessLevel, date: Date = Date()) -> Training
         }
     }
 
+    func lightPlan(from plan: TrainingPlan) -> TrainingPlan {
+        let exercises = plan.exercises.map { planned in
+            PlannedExercise(
+                exercise: planned.exercise,
+                sets: max(1, planned.sets - 1),
+                reps: max(1, min(planned.reps, (Double(planned.reps) * 0.7).roundedInt())),
+                restSeconds: planned.restSeconds + 15,
+                isCompleted: planned.isCompleted,
+                completedSets: planned.completedSets
+            )
+        }
+
+        return TrainingPlan(
+            id: plan.id,
+            date: plan.date,
+            exercises: exercises,
+            targetDurationMinutes: max(10, (Double(plan.targetDurationMinutes) * 0.75).roundedInt()),
+            fitnessLevel: plan.fitnessLevel,
+            isCompleted: plan.isCompleted
+        )
+    }
+
     private static func storageKey(for date: Date) -> String {
         let formatter = DateFormatter()
         formatter.calendar = Calendar(identifier: .gregorian)
@@ -131,5 +153,11 @@ func estimateDuration(for plan: TrainingPlan) -> Int {
             totalSeconds += exerciseTime + restTime
         }
         return totalSeconds / 60
+    }
+}
+
+private extension Double {
+    func roundedInt() -> Int {
+        Int(rounded())
     }
 }

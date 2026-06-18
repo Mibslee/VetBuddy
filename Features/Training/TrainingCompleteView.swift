@@ -34,6 +34,9 @@ struct TrainingCompleteView: View {
         .background(Color.vbCream.ignoresSafeArea())
         .preferredColorScheme(.light)
         .navigationBarBackButtonHidden(true)
+        .onAppear {
+            saveFeedback()
+        }
         .navigationDestination(isPresented: $showPoster) {
             PosterPreviewView(
                 data: PosterData(
@@ -108,17 +111,14 @@ struct TrainingCompleteView: View {
     private var actionButtons: some View {
         VStack(spacing: 16) {
             BigButton("打卡") {
-                saveFeedback()
                 router.selectedTab = .home
             }
 
             BigButton("生成海报", style: .secondary) {
-                saveFeedback()
                 showPoster = true
             }
 
             Button("返回首页") {
-                saveFeedback()
                 router.selectedTab = .home
             }
             .font(VBFont.body)
@@ -164,8 +164,8 @@ struct TrainingCompleteView: View {
         .frame(maxWidth: .infinity, alignment: .leading)
         .background(Color.vbCardBackground)
         .clipShape(RoundedRectangle(cornerRadius: 16, style: .continuous))
-        .onChange(of: selectedEffort) { _, _ in feedbackSaved = false }
-        .onChange(of: selectedDiscomfort) { _, _ in feedbackSaved = false }
+        .onChange(of: selectedEffort) { _, _ in saveFeedback() }
+        .onChange(of: selectedDiscomfort) { _, _ in saveFeedback() }
     }
 
     @ViewBuilder

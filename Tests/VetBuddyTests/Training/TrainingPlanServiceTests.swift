@@ -81,6 +81,37 @@ final class TrainingPlanServiceTests: XCTestCase {
         }
     }
 
+    func testLightPlan_ReducesLoadAndExtendsRest() {
+        let plan = service.generateDailyPlan(for: .L2)
+
+        let lightPlan = service.lightPlan(from: plan)
+
+        XCTAssertEqual(lightPlan.exercises.count, plan.exercises.count)
+        XCTAssertLessThan(lightPlan.targetDurationMinutes, plan.targetDurationMinutes)
+        for (base, light) in zip(plan.exercises, lightPlan.exercises) {
+            XCTAssertLessThanOrEqual(light.sets, base.sets)
+            XCTAssertLessThanOrEqual(light.reps, base.reps)
+            XCTAssertGreaterThan(light.restSeconds, base.restSeconds)
+            XCTAssertGreaterThanOrEqual(light.sets, 1)
+            XCTAssertGreaterThanOrEqual(light.reps, 1)
+        }
+    }
+
+    func testTrainingFeedbackStore_RecentHardFeedbackTriggersLightMode() {
+        let store = TrainingFeedbackStore(defaults: defaults)
+        store.save(TrainingFeedback(effort: .tooHard, discomfort: .none))
+
+        XCTAssertTrue(store.shouldUseLightMode())
+    }
+
+    func testTrainingFeedbackStore_OldHardFeedbackDoesNotTriggerLightMode() {
+        let store = TrainingFeedbackStore(defaults: defaults)
+        let oldDate = Calendar.current.date(byAdding: .day, value: -5, to: Date())!
+        store.save(TrainingFeedback(date: oldDate, effort: .tooHard, discomfort: .none))
+
+        XCTAssertFalse(store.shouldUseLightMode())
+    }
+
     // MARK: - Exercise Library
 
     func testExerciseLibrary_FilterByLevel() {

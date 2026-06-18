@@ -4,6 +4,7 @@ import SwiftUI
 struct ProfileView: View {
 
     @StateObject private var viewModel = ProfileViewModel()
+    @StateObject private var speechController = GuidanceSpeechController()
     @EnvironmentObject private var router: AppRouter
 
     @State private var showResetAlert = false
@@ -13,6 +14,7 @@ struct ProfileView: View {
             ScrollView {
                 VStack(spacing: 24) {
                     userInfoSection
+                    familySummarySection
                     healthKitSection
                     settingsSection
                     aboutSection
@@ -24,7 +26,10 @@ struct ProfileView: View {
             }
             .background(Color.vbCream.ignoresSafeArea())
             .toolbar(.hidden, for: .navigationBar)
-            .onAppear { viewModel.loadProfile() }
+            .onAppear {
+                viewModel.loadProfile()
+                Task { await viewModel.loadFamilySummary() }
+            }
             .alert("确定重新评估？", isPresented: $showResetAlert) {
                 Button("确定", role: .destructive) {
                     viewModel.resetAssessment()
@@ -98,6 +103,66 @@ struct ProfileView: View {
             .padding(.vertical, 8)
             .background(Color.vbAccent)
             .clipShape(Capsule())
+    }
+
+    // MARK: - Family Summary
+
+    private var familySummarySection: some View {
+        VStack(alignment: .leading, spacing: 14) {
+            HStack(spacing: 10) {
+                Image(systemName: "person.2.fill")
+                    .font(.system(size: 26))
+                    .foregroundStyle(Color.vbAccent)
+                Text("家属查看")
+                    .vbHeadline()
+                Spacer()
+                Text("本机概览")
+                    .vbCaption()
+                    .foregroundStyle(Color.vbSecondaryText)
+            }
+
+            Text("这些信息只在本机显示，适合当面给家人了解最近状态。")
+                .font(VBFont.caption)
+                .foregroundStyle(Color.vbSecondaryText)
+
+            HStack(spacing: 10) {
+                summaryTile(title: "近 7 天训练", value: "\(viewModel.familySummary.trainingDays) 天")
+                summaryTile(title: "今日饮食", value: "\(viewModel.familySummary.todayMealCount) 项")
+                summaryTile(title: "今日蛋白", value: "\(formatGrams(viewModel.familySummary.todayProteinG))g")
+            }
+
+            HStack(alignment: .top, spacing: 8) {
+                Image(systemName: "figure.walk.circle.fill")
+                    .foregroundStyle(Color.vbSuccess)
+                    .font(.system(size: 18))
+                    .padding(.top, 1)
+                Text("最近一次训练：\(viewModel.familySummary.latestTrainingText)")
+                    .font(VBFont.caption)
+                    .foregroundStyle(Color.vbSecondaryText)
+                    .fixedSize(horizontal: false, vertical: true)
+            }
+        }
+        .padding(20)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .background(Color.vbCardBackground)
+        .clipShape(RoundedRectangle(cornerRadius: 16, style: .continuous))
+    }
+
+    private func summaryTile(title: String, value: String) -> some View {
+        VStack(spacing: 6) {
+            Text(value)
+                .font(VBFont.headline)
+                .foregroundStyle(Color.vbMainText)
+                .lineLimit(1)
+                .minimumScaleFactor(0.82)
+            Text(title)
+                .font(VBFont.caption)
+                .foregroundStyle(Color.vbSecondaryText)
+                .multilineTextAlignment(.center)
+        }
+        .frame(maxWidth: .infinity, minHeight: 68)
+        .background(Color.vbCream.opacity(0.65))
+        .clipShape(RoundedRectangle(cornerRadius: 10, style: .continuous))
     }
 
     // MARK: - HealthKit Section
@@ -175,6 +240,28 @@ struct ProfileView: View {
                 .tint(Color.vbAccent)
             }
             .padding(20)
+            Divider().padding(.leading, 52)
+            Button {
+                speechController.toggle(text: "老铁 VetBuddy 语音试听。训练时如果听不清，可以调高手机音量，或在这里调整语速。")
+            } label: {
+                HStack {
+                    Image(systemName: speechController.isSpeaking ? "speaker.slash.fill" : "speaker.wave.2.fill")
+                        .foregroundStyle(Color.vbAccent)
+                        .frame(width: 32)
+                    Text(speechController.isSpeaking ? "停止试听" : "试听语音")
+                        .vbBody()
+                    Spacer()
+                    Text("训练前检查音量")
+                        .font(VBFont.caption)
+                        .foregroundStyle(Color.vbSecondaryText)
+                }
+                .padding(20)
+                .frame(minHeight: 60)
+                .contentShape(Rectangle())
+            }
+            .buttonStyle(.plain)
+            .disabled(!viewModel.soundEnabled)
+            .opacity(viewModel.soundEnabled ? 1 : 0.45)
         }
         .background(Color.vbCardBackground)
         .clipShape(RoundedRectangle(cornerRadius: 16, style: .continuous))
@@ -244,6 +331,13 @@ struct ProfileView: View {
 
     private var appVersion: String {
         Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String ?? "1.0.0"
+    }
+
+    private func formatGrams(_ value: Double) -> String {
+        if value.rounded() == value {
+            return String(format: "%.0f", value)
+        }
+        return String(format: "%.1f", value)
     }
 
     // MARK: - Disclaimer Section

@@ -81,6 +81,13 @@ struct TrainingFeedbackStore {
         loadAll().sorted { $0.date > $1.date }.first
     }
 
+    func shouldUseLightMode(asOf date: Date = Date()) -> Bool {
+        guard let latest = latest() else { return false }
+        let days = Calendar.current.dateComponents([.day], from: latest.date, to: date).day ?? 0
+        guard days <= 3 else { return false }
+        return latest.effort == .tooHard || latest.discomfort != .none
+    }
+
     private func loadAll() -> [TrainingFeedback] {
         guard let data = defaults.data(forKey: Keys.feedback) else { return [] }
         return (try? JSONDecoder().decode([TrainingFeedback].self, from: data)) ?? []

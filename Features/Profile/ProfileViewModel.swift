@@ -10,16 +10,23 @@ final class ProfileViewModel: ObservableObject {
     @Published var rhythmVoiceEnabled: Bool = true
     @Published var safetyVoiceEnabled: Bool = true
     @Published var speechRate: Double = 0.43
+    @Published var familySummary = FamilySummary.empty
 
     private let assessmentService: AssessmentService
     private let permissionManager: HealthKitPermissionManager
+    private let trainingStore: TrainingRecordStore
+    private let dietStore: DietRecordStore
 
     init(
         assessmentService: AssessmentService = AssessmentService(),
-        permissionManager: HealthKitPermissionManager = HealthKitPermissionManager()
+        permissionManager: HealthKitPermissionManager = HealthKitPermissionManager(),
+        trainingStore: TrainingRecordStore = .shared,
+        dietStore: DietRecordStore = DietRecordStore()
     ) {
         self.assessmentService = assessmentService
         self.permissionManager = permissionManager
+        self.trainingStore = trainingStore
+        self.dietStore = dietStore
     }
 
     func loadProfile() {
@@ -29,6 +36,26 @@ final class ProfileViewModel: ObservableObject {
         rhythmVoiceEnabled = UserAppSettings.rhythmVoiceEnabled
         safetyVoiceEnabled = UserAppSettings.safetyVoiceEnabled
         speechRate = UserAppSettings.speechRate
+    }
+
+    func loadFamilySummary() async {
+        let checkins = await trainingStore.allCheckins()
+        let recentSeven = checkins.filter {
+            let dayDelta = Calendar.current.dateComponents([.day], from: $0.date, to: Date()).day ?? 99
+            return dayDelta >= 0 && dayDelta < 7
+        }
+        let todayDiet = dietStore.loadEntries()
+        let summary = DietAnalyzer.summarize(todayDiet)
+        await MainActor.run {
+            familySummary = FamilySummary(
+                trainingDays: recentSeven.count,
+                latestTrainingText: recentSeven.first.map {
+                    "\($0.completedExerciseCount)/\($0.totalExerciseCount) 个动作，\(max(1, $0.totalDurationSeconds / 60)) 分钟"
+                } ?? "近 7 天暂无训练记录",
+                todayMealCount: todayDiet.count,
+                todayProteinG: summary.proteinG
+            )
+        }
     }
 
     func resetAssessment() {
@@ -99,4 +126,18 @@ final class ProfileViewModel: ObservableObject {
         }
     }
 
+}
+
+struct FamilySummary: Equatable {
+    let trainingDays: Int
+    let latestTrainingText: String
+    let todayMealCount: Int
+    let todayProteinG: Double
+
+    static let empty = FamilySummary(
+        trainingDays: 0,
+        latestTrainingText: "暂无训练记录",
+        todayMealCount: 0,
+        todayProteinG: 0
+    )
 }

@@ -55,21 +55,36 @@ struct HomeView: View {
                 .vbBody()
                 .foregroundStyle(Color.vbSecondaryText)
 
-            HStack(spacing: 10) {
-                actionButton(
-                    title: viewModel.isTrainingLocked ? "饮食建议" : (viewModel.hasAssessment ? "开始训练" : "先做评估"),
-                    icon: viewModel.isTrainingLocked ? "leaf.fill" : "figure.walk",
-                    filled: true
-                ) {
-                    if viewModel.isTrainingLocked {
-                        router.selectedTab = .nutrition
-                    } else if viewModel.hasAssessment {
-                        router.navigateToTraining()
-                    } else {
-                        router.showOnboardingFlow()
-                    }
-                }
+            HStack(alignment: .top, spacing: 8) {
+                Image(systemName: "heart.text.square.fill")
+                    .foregroundStyle(Color.vbSuccess)
+                    .font(.system(size: 18, weight: .semibold))
+                    .padding(.top, 2)
+                Text(viewModel.dailyCareText)
+                    .font(VBFont.caption)
+                    .foregroundStyle(Color.vbSecondaryText)
+                    .fixedSize(horizontal: false, vertical: true)
+            }
+            .padding(12)
+            .frame(maxWidth: .infinity, alignment: .leading)
+            .background(Color.vbSuccess.opacity(0.08))
+            .clipShape(RoundedRectangle(cornerRadius: 10, style: .continuous))
 
+            actionButton(
+                title: viewModel.isTrainingLocked ? "查看饮食建议" : (viewModel.hasAssessment ? "开始今日训练" : "先做健康评估"),
+                icon: viewModel.isTrainingLocked ? "leaf.fill" : "figure.walk",
+                filled: true
+            ) {
+                if viewModel.isTrainingLocked {
+                    router.selectedTab = .nutrition
+                } else if viewModel.hasAssessment {
+                    router.navigateToTraining()
+                } else {
+                    router.showOnboardingFlow()
+                }
+            }
+
+            HStack(spacing: 10) {
                 actionButton(title: "记一餐", icon: "fork.knife", filled: false) {
                     router.selectedTab = .nutrition
                 }
@@ -92,11 +107,12 @@ struct HomeView: View {
                     .font(.system(size: 22, weight: .semibold))
                 Text(title)
                     .font(VBFont.caption)
-                    .lineLimit(1)
-                    .minimumScaleFactor(0.8)
+                    .lineLimit(2)
+                    .multilineTextAlignment(.center)
+                    .minimumScaleFactor(0.9)
             }
             .foregroundStyle(filled ? .white : Color.vbAccent)
-            .frame(maxWidth: .infinity, minHeight: 76)
+            .frame(maxWidth: .infinity, minHeight: filled ? 62 : 72)
             .background(filled ? Color.vbAccent : Color.vbAccent.opacity(0.08))
             .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
         }

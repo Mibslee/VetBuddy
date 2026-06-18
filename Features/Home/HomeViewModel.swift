@@ -10,6 +10,7 @@ final class HomeViewModel: ObservableObject {
     @Published var healthKitStatus: HealthKitPermissionStatus = .notDetermined
     @Published var recentCheckins: [DailyCheckin] = []
     @Published var latestFeedback: TrainingFeedback?
+    @Published var usesLightTrainingMode: Bool = false
 
     private let planService = TrainingPlanService()
     private let recordStore = TrainingRecordStore.shared
@@ -43,11 +44,19 @@ final class HomeViewModel: ObservableObject {
     func loadTodayPlan() async {
         let assessment = assessmentService.loadLatestAssessment()
         let plan: TrainingPlan?
-        if assessment?.riskLevel == .redFlag {
+        if assessment == nil || assessment?.riskLevel == .redFlag {
             plan = nil
+            await MainActor.run {
+                usesLightTrainingMode = false
+            }
         } else {
             let level = assessment?.fitnessLevel ?? .L1
-            plan = planService.loadOrCreateDailyPlan(for: level)
+            let basePlan = planService.loadOrCreateDailyPlan(for: level)
+            let lightMode = feedbackStore.shouldUseLightMode()
+            plan = lightMode ? planService.lightPlan(from: basePlan) : basePlan
+            await MainActor.run {
+                usesLightTrainingMode = lightMode
+            }
         }
         await MainActor.run {
             self.assessment = assessment
@@ -139,6 +148,26 @@ final class HomeViewModel: ObservableObject {
             return "上次感觉轻松。今天保持稳定完成，不急着加量。"
         }
         return "上次强度正好。今天按当前计划继续。"
+    }
+
+    var dailyCareText: String {
+        if isTrainingLocked {
+            return "今天先把运动放一放，饮食和健康记录也算是在照顾自己。"
+        }
+        if usesLightTrainingMode {
+            return "今天已切到轻量安排。慢一点、少一点，都比硬撑更合适。"
+        }
+        if streak >= 3 {
+            return "已经连续坚持 \(streak) 天。今天保持稳定，不需要急着加量。"
+        }
+        if healthSummary?.steps == nil && healthSummary?.weight == nil {
+            return "记录一下步数或体重，后面的建议会更贴近今天的状态。"
+        }
+        return "今天先完成一件小事就好：训练、记一餐或补一条健康数据。"
+    }
+
+    var planModeText: String {
+        usesLightTrainingMode ? "轻量模式" : "标准安排"
     }
 
     var greetingText: String {

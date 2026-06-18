@@ -187,8 +187,9 @@ struct DietRecordStore {
         save(entries)
     }
 
-    func repeatEntries(_ sourceEntries: [DietLogEntry], date: Date = Date()) {
-        guard !sourceEntries.isEmpty else { return }
+    @discardableResult
+    func repeatEntries(_ sourceEntries: [DietLogEntry], date: Date = Date()) -> Int {
+        guard !sourceEntries.isEmpty else { return 0 }
         var entries = loadAllEntries()
         entries.append(
             contentsOf: sourceEntries.map { source in
@@ -204,6 +205,7 @@ struct DietRecordStore {
             }
         )
         save(entries)
+        return sourceEntries.count
     }
 
     func deleteEntry(id: UUID) {

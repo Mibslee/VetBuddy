@@ -30,6 +30,8 @@ final class GuidanceSpeechController: NSObject, ObservableObject {
     }
 
     private func speak(_ text: String, voiceAssetName: String?) {
+        configureAudioSession()
+
         if let voiceAssetName, playVoiceAsset(named: voiceAssetName) {
             return
         }
@@ -60,6 +62,16 @@ final class GuidanceSpeechController: NSObject, ObservableObject {
         } catch {
             audioPlayer = nil
             return false
+        }
+    }
+
+    private func configureAudioSession() {
+        do {
+            let session = AVAudioSession.sharedInstance()
+            try session.setCategory(.playback, mode: .spokenAudio, options: [.duckOthers])
+            try session.setActive(true)
+        } catch {
+            // Speech remains best-effort; system TTS can still work if session setup fails.
         }
     }
 }

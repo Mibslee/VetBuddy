@@ -12,6 +12,7 @@ final class NutritionViewModel: ObservableObject {
     @Published var recentDietEntries: [DietLogEntry] = []
     @Published var recipeSetIndex: Int = 0
     @Published var dailyFocusIndex: Int = 0
+    @Published var dietNotice: String?
 
     private let assessmentService: AssessmentService
     private let healthKitService: HealthKitService
@@ -92,6 +93,7 @@ final class NutritionViewModel: ObservableObject {
     func addFoodPortion(_ food: CommonFoodPortion, mealType: MealType, servings: Double) {
         guard servings > 0 else { return }
         dietStore.addEntry(food.entry(mealType: mealType, servings: servings))
+        dietNotice = "已添加 \(food.name)"
         reloadDietEntries()
     }
 
@@ -115,6 +117,7 @@ final class NutritionViewModel: ObservableObject {
             fatPer100g: max(fatPer100g, 0)
         )
         dietStore.addEntry(entry)
+        dietNotice = "已添加 \(trimmedName)"
         reloadDietEntries()
     }
 
@@ -128,18 +131,23 @@ final class NutritionViewModel: ObservableObject {
             fatPer100g: entry.fatPer100g
         )
         dietStore.addEntry(repeated)
+        dietNotice = "已添加 \(entry.foodName)"
         reloadDietEntries()
     }
 
-    func repeatYesterdayMeal(_ mealType: MealType) {
-        guard let yesterday = Calendar.current.date(byAdding: .day, value: -1, to: Date()) else { return }
+    @discardableResult
+    func repeatYesterdayMeal(_ mealType: MealType) -> Int {
+        guard let yesterday = Calendar.current.date(byAdding: .day, value: -1, to: Date()) else { return 0 }
         let source = dietStore.loadEntries(for: yesterday, mealType: mealType)
-        dietStore.repeatEntries(source)
+        let count = dietStore.repeatEntries(source)
+        dietNotice = count > 0 ? "已复制昨天\(mealType.displayName) \(count) 项" : "昨天没有\(mealType.displayName)记录"
         reloadDietEntries()
+        return count
     }
 
     func deleteDietEntry(_ entry: DietLogEntry) {
         dietStore.deleteEntry(id: entry.id)
+        dietNotice = "已删除 \(entry.foodName)"
         reloadDietEntries()
     }
 

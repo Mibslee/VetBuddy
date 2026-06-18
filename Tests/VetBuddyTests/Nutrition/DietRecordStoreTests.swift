@@ -67,4 +67,20 @@ final class DietRecordStoreTests: XCTestCase {
         XCTAssertEqual(entries.count, 1)
         XCTAssertEqual(entries.first?.foodName, "牛奶")
     }
+
+    func testRepeatEntriesCopiesEntriesToTodayAndReturnsCount() {
+        let calendar = Calendar.current
+        let yesterday = calendar.date(byAdding: .day, value: -1, to: Date())!
+        let source = [
+            DietLogEntry(date: yesterday, mealType: .breakfast, foodName: "鸡蛋", grams: 50, proteinPer100g: 13, carbsPer100g: 1, fatPer100g: 10),
+            DietLogEntry(date: yesterday, mealType: .breakfast, foodName: "牛奶", grams: 250, proteinPer100g: 3.2, carbsPer100g: 5, fatPer100g: 3)
+        ]
+
+        let count = store.repeatEntries(source)
+        let todayEntries = store.loadEntries()
+
+        XCTAssertEqual(count, 2)
+        XCTAssertEqual(todayEntries.count, 2)
+        XCTAssertEqual(Set(todayEntries.map(\.foodName)), Set(["鸡蛋", "牛奶"]))
+    }
 }
