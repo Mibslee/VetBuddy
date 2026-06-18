@@ -23,7 +23,7 @@ struct ExerciseMistakesPanel: View {
     }
 
     private func mistakeCard(_ mistake: ExerciseMistake) -> some View {
-        HStack(alignment: .top, spacing: 12) {
+        HStack(alignment: .top, spacing: 14) {
             mistakeImage(mistake)
 
             VStack(alignment: .leading, spacing: 8) {
@@ -47,7 +47,7 @@ struct ExerciseMistakesPanel: View {
                         .fixedSize(horizontal: false, vertical: true)
                 }
             }
-            .frame(maxWidth: .infinity, minHeight: 96, alignment: .topLeading)
+            .frame(maxWidth: .infinity, minHeight: 132, alignment: .topLeading)
         }
         .padding(12)
         .frame(maxWidth: .infinity, alignment: .leading)
@@ -61,7 +61,7 @@ struct ExerciseMistakesPanel: View {
             Image(uiImage: image)
                 .resizable()
                 .scaledToFill()
-                .frame(width: 96, height: 96)
+                .frame(width: 128, height: 132)
                 .clipShape(RoundedRectangle(cornerRadius: 8, style: .continuous))
                 .accessibilityHidden(true)
         } else {
@@ -72,7 +72,7 @@ struct ExerciseMistakesPanel: View {
                     .font(.system(size: 30, weight: .semibold))
                     .foregroundStyle(Color.vbWarning)
             }
-            .frame(width: 96, height: 96)
+            .frame(width: 128, height: 132)
             .accessibilityHidden(true)
         }
     }
