@@ -330,7 +330,8 @@ private struct ExerciseRhythmFloatingButton: View {
         Button {
             speechController.toggle(
                 text: exercise.rhythmGuidanceText,
-                voiceAssetName: "rhythm_\(exercise.id)"
+                voiceAssetName: "rhythm_\(exercise.id)",
+                loops: true
             )
         } label: {
             HStack(spacing: 7) {
@@ -351,6 +352,9 @@ private struct ExerciseRhythmFloatingButton: View {
         .allowsHitTesting(UserAppSettings.rhythmVoiceEnabled)
         .accessibilityLabel(speechController.isSpeaking ? "关闭训练节奏语音" : "播放训练节奏语音")
         .onDisappear {
+            speechController.stop()
+        }
+        .onChange(of: exercise.id) { _, _ in
             speechController.stop()
         }
     }

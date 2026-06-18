@@ -13,12 +13,12 @@ final class GuidanceSpeechController: NSObject, ObservableObject {
         synthesizer.delegate = self
     }
 
-    func toggle(text: String, voiceAssetName: String? = nil) {
+    func toggle(text: String, voiceAssetName: String? = nil, loops: Bool = false) {
         guard UserAppSettings.soundEnabled else { return }
         if synthesizer.isSpeaking || audioPlayer?.isPlaying == true {
             stop()
         } else {
-            speak(text, voiceAssetName: voiceAssetName)
+            speak(text, voiceAssetName: voiceAssetName, loops: loops)
         }
     }
 
@@ -29,10 +29,10 @@ final class GuidanceSpeechController: NSObject, ObservableObject {
         isSpeaking = false
     }
 
-    private func speak(_ text: String, voiceAssetName: String?) {
+    private func speak(_ text: String, voiceAssetName: String?, loops: Bool) {
         configureAudioSession()
 
-        if let voiceAssetName, playVoiceAsset(named: voiceAssetName) {
+        if let voiceAssetName, playVoiceAsset(named: voiceAssetName, loops: loops) {
             return
         }
 
@@ -45,7 +45,7 @@ final class GuidanceSpeechController: NSObject, ObservableObject {
         synthesizer.speak(utterance)
     }
 
-    private func playVoiceAsset(named name: String) -> Bool {
+    private func playVoiceAsset(named name: String, loops: Bool) -> Bool {
         guard let url = Bundle.main.url(forResource: name, withExtension: "m4a")
             ?? Bundle.main.url(forResource: name, withExtension: "mp3")
             ?? Bundle.main.url(forResource: name, withExtension: "wav") else {
@@ -55,6 +55,7 @@ final class GuidanceSpeechController: NSObject, ObservableObject {
         do {
             let player = try AVAudioPlayer(contentsOf: url)
             player.delegate = self
+            player.numberOfLoops = loops ? -1 : 0
             player.prepareToPlay()
             guard player.play() else {
                 audioPlayer = nil
