@@ -197,6 +197,11 @@ struct TrainingSessionView: View {
                     VStack(spacing: 16) {
                         ExerciseMediaView(exercise: exercise.exercise, height: 300)
                             .padding(.top, 8)
+                            .overlay(alignment: .bottomTrailing) {
+                                ExerciseRhythmFloatingButton(exercise: exercise.exercise)
+                                    .padding(.trailing, 18)
+                                    .padding(.bottom, 46)
+                            }
 
                         currentExerciseSummary(exercise)
 
@@ -257,8 +262,6 @@ struct TrainingSessionView: View {
                 exerciseStat(label: "休息", value: "\(exercise.restSeconds) 秒")
                 exerciseStat(label: "已跳过", value: "\(viewModel.skippedExerciseIndices.count)")
             }
-
-            ExerciseRhythmGuidancePanel(exercise: exercise.exercise, compact: true)
         }
         .padding(16)
         .frame(maxWidth: .infinity, alignment: .leading)
@@ -318,57 +321,38 @@ struct TrainingSessionView: View {
 
 }
 
-private struct ExerciseRhythmGuidancePanel: View {
+private struct ExerciseRhythmFloatingButton: View {
     @StateObject private var speechController = GuidanceSpeechController()
 
     let exercise: Exercise
-    let compact: Bool
-
-    init(exercise: Exercise, compact: Bool = false) {
-        self.exercise = exercise
-        self.compact = compact
-    }
 
     var body: some View {
-        HStack(alignment: .center, spacing: 12) {
-            Image(systemName: "metronome.fill")
-                .font(.system(size: 24))
-                .foregroundStyle(Color.vbAccent)
-
-            VStack(alignment: .leading, spacing: 4) {
-                Text("训练节奏语音")
-                    .font(VBFont.headline)
-                    .foregroundStyle(Color.vbMainText)
-                if !compact {
-                    Text("运动时播放“慢起、保持、慢落”的节奏倒数；注意事项仍在下方单独朗读。")
-                        .font(VBFont.caption)
-                        .foregroundStyle(Color.vbSecondaryText)
-                }
+        Button {
+            speechController.toggle(
+                text: exercise.rhythmGuidanceText,
+                voiceAssetName: "rhythm_\(exercise.id)"
+            )
+        } label: {
+            HStack(spacing: 7) {
+                Image(systemName: speechController.isSpeaking ? "speaker.slash.fill" : "metronome.fill")
+                    .font(.system(size: 15, weight: .bold))
+                Text(speechController.isSpeaking ? "关闭" : "节奏")
+                    .font(.system(size: 15, weight: .bold))
             }
-
-            Spacer()
-
-            Button {
-                speechController.toggle(
-                    text: exercise.rhythmGuidanceText,
-                    voiceAssetName: "rhythm_\(exercise.id)"
-                )
-            } label: {
-                Image(systemName: speechController.isSpeaking ? "speaker.slash.fill" : "speaker.wave.2.fill")
-                    .font(.system(size: 20, weight: .semibold))
-                    .foregroundStyle(.white)
-                    .frame(width: 46, height: 46)
-                    .background(Color.vbAccent)
-                    .clipShape(Circle())
-            }
-            .accessibilityLabel(speechController.isSpeaking ? "关闭节奏语音" : "播放节奏语音")
+            .foregroundStyle(.white)
+            .padding(.horizontal, 13)
+            .frame(height: 42)
+            .background(Color.vbAccent)
+            .clipShape(Capsule())
+            .shadow(color: Color.vbMainText.opacity(0.18), radius: 8, x: 0, y: 4)
         }
-        .padding(compact ? 12 : 16)
-        .frame(maxWidth: .infinity, alignment: .leading)
-        .background(compact ? Color.vbCream.opacity(0.55) : Color.vbCardBackground)
-        .clipShape(RoundedRectangle(cornerRadius: compact ? 10 : 12, style: .continuous))
+        .buttonStyle(.plain)
         .opacity(UserAppSettings.rhythmVoiceEnabled ? 1 : 0.55)
         .allowsHitTesting(UserAppSettings.rhythmVoiceEnabled)
+        .accessibilityLabel(speechController.isSpeaking ? "关闭训练节奏语音" : "播放训练节奏语音")
+        .onDisappear {
+            speechController.stop()
+        }
     }
 }
 
