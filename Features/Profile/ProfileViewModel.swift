@@ -11,6 +11,8 @@ final class ProfileViewModel: ObservableObject {
     @Published var safetyVoiceEnabled: Bool = true
     @Published var speechRate: Double = 0.43
     @Published var familySummary = FamilySummary.empty
+    @Published var biologicalSex: BiologicalSex = .unspecified
+    @Published var heightCM: Double = 0
 
     private let assessmentService: AssessmentService
     private let permissionManager: HealthKitPermissionManager
@@ -36,6 +38,8 @@ final class ProfileViewModel: ObservableObject {
         rhythmVoiceEnabled = UserAppSettings.rhythmVoiceEnabled
         safetyVoiceEnabled = UserAppSettings.safetyVoiceEnabled
         speechRate = UserAppSettings.speechRate
+        biologicalSex = UserAppSettings.biologicalSex
+        heightCM = UserAppSettings.heightCM ?? 0
     }
 
     func loadFamilySummary() async {
@@ -81,6 +85,16 @@ final class ProfileViewModel: ObservableObject {
     func setSpeechRate(_ rate: Double) {
         speechRate = rate
         UserAppSettings.speechRate = rate
+    }
+
+    func setBiologicalSex(_ sex: BiologicalSex) {
+        biologicalSex = sex
+        UserAppSettings.biologicalSex = sex
+    }
+
+    func setHeightCM(_ value: Double) {
+        heightCM = value
+        UserAppSettings.heightCM = value > 0 ? value : nil
     }
 
     func requestHealthKit() async {

@@ -202,6 +202,8 @@ struct TrainingSessionView: View {
 
                         ExerciseRhythmGuidancePanel(exercise: exercise.exercise)
 
+                        ExerciseMistakesPanel(exercise: exercise.exercise)
+
                         ExerciseGuidancePanel(exercise: exercise.exercise)
                     }
                     .padding(.horizontal, 20)

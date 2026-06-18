@@ -20,6 +20,20 @@ enum CKDLevel: String, Codable, Sendable {
     case unknown
 }
 
+enum BiologicalSex: String, Codable, CaseIterable, Sendable {
+    case unspecified
+    case male
+    case female
+
+    var displayName: String {
+        switch self {
+        case .unspecified: return "未填写"
+        case .male: return "男"
+        case .female: return "女"
+        }
+    }
+}
+
 // MARK: - Value Types
 
 struct AssessmentResult: Codable, Equatable, Sendable {

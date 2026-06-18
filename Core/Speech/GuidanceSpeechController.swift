@@ -56,11 +56,17 @@ final class GuidanceSpeechController: NSObject, ObservableObject {
             let player = try AVAudioPlayer(contentsOf: url)
             player.delegate = self
             player.prepareToPlay()
+            guard player.play() else {
+                audioPlayer = nil
+                isSpeaking = false
+                return false
+            }
             audioPlayer = player
             isSpeaking = true
-            return player.play()
+            return true
         } catch {
             audioPlayer = nil
+            isSpeaking = false
             return false
         }
     }

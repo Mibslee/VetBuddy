@@ -166,6 +166,27 @@ final class TrainingPlanServiceTests: XCTestCase {
         XCTAssertEqual(records.first?.exerciseId, "sit_to_stand")
     }
 
+    func testTrainingSession_CompletedRepsSavesTotalRepsAcrossSets() async throws {
+        let store = makeRecordStore()
+        let exercise = ExerciseLibrary.shared.exercise(byId: "sit_to_stand")!
+        let planned = PlannedExercise(exercise: exercise, sets: 2, reps: 8, restSeconds: 1)
+        let plan = TrainingPlan(exercises: [planned], targetDurationMinutes: 5, fitnessLevel: .L1)
+        let viewModel = await MainActor.run {
+            TrainingSessionViewModel(recordStore: store, healthKitService: HealthKitService(defaults: defaults))
+        }
+
+        await MainActor.run {
+            viewModel.startSession(plan: plan)
+            viewModel.currentSet = 2
+            viewModel.completeSet()
+        }
+
+        try await Task.sleep(nanoseconds: 300_000_000)
+        let records = await store.recordsForDate(Date())
+        XCTAssertEqual(records.first?.completedSets, 2)
+        XCTAssertEqual(records.first?.completedReps, 16)
+    }
+
     func testTrainingRecordStore_ConsecutiveStreak() async {
         let store = makeRecordStore()
         let calendar = Calendar.current

@@ -160,7 +160,7 @@ final class TrainingSessionViewModel: ObservableObject {
             exerciseId: exercise.exercise.id,
             exerciseName: exercise.exercise.nameCN,
             completedSets: exercise.sets,
-            completedReps: exercise.reps,
+            completedReps: exercise.sets * exercise.reps,
             durationSeconds: exercise.exercise.durationSeconds
         )
         exerciseRecords.append(record)

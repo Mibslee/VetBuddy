@@ -15,6 +15,7 @@ struct ProfileView: View {
                 VStack(spacing: 24) {
                     userInfoSection
                     familySummarySection
+                    bodyProfileSection
                     healthKitSection
                     settingsSection
                     aboutSection
@@ -166,6 +167,58 @@ struct ProfileView: View {
     }
 
     // MARK: - HealthKit Section
+
+    private var bodyProfileSection: some View {
+        VStack(alignment: .leading, spacing: 16) {
+            HStack(spacing: 10) {
+                Image(systemName: "person.text.rectangle.fill")
+                    .font(.system(size: 24))
+                    .foregroundStyle(Color.vbAccent)
+                Text("营养估算资料")
+                    .vbHeadline()
+                Spacer()
+            }
+
+            Text("用于计算热量和蛋白质等目标，仅保存在本机。未填写时会使用保守平均值。")
+                .font(VBFont.caption)
+                .foregroundStyle(Color.vbSecondaryText)
+
+            Picker("性别", selection: Binding(
+                get: { viewModel.biologicalSex },
+                set: { viewModel.setBiologicalSex($0) }
+            )) {
+                ForEach(BiologicalSex.allCases, id: \.self) { sex in
+                    Text(sex.displayName).tag(sex)
+                }
+            }
+            .pickerStyle(.segmented)
+
+            VStack(alignment: .leading, spacing: 8) {
+                HStack {
+                    Text("身高")
+                        .vbBody()
+                    Spacer()
+                    Text(viewModel.heightCM > 0 ? "\(Int(viewModel.heightCM)) cm" : "未填写")
+                        .font(VBFont.body)
+                        .foregroundStyle(Color.vbSecondaryText)
+                }
+
+                Slider(
+                    value: Binding(
+                        get: { viewModel.heightCM > 0 ? viewModel.heightCM : 160 },
+                        set: { viewModel.setHeightCM($0.rounded()) }
+                    ),
+                    in: 140...185,
+                    step: 1
+                )
+                .tint(Color.vbAccent)
+            }
+        }
+        .padding(20)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .background(Color.vbCardBackground)
+        .clipShape(RoundedRectangle(cornerRadius: 16, style: .continuous))
+    }
 
     private var healthKitSection: some View {
         VStack(spacing: 16) {

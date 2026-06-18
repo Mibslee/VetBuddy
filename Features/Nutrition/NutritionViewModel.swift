@@ -44,13 +44,21 @@ final class NutritionViewModel: ObservableObject {
             advice = NutritionAdvisor.recommend(
                 for: assessment,
                 content: NutritionContentLoader.sampleAdvice,
-                weightKG: weight
+                weightKG: weight,
+                sex: UserAppSettings.biologicalSex,
+                heightCM: UserAppSettings.heightCM
             )
             reloadDietEntries()
             return
         }
 
-        advice = NutritionAdvisor.recommend(for: assessment, content: content, weightKG: weight)
+        advice = NutritionAdvisor.recommend(
+            for: assessment,
+            content: content,
+            weightKG: weight,
+            sex: UserAppSettings.biologicalSex,
+            heightCM: UserAppSettings.heightCM
+        )
         reloadDietEntries()
     }
 

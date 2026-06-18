@@ -36,6 +36,10 @@ targets:
       - path: Resources/ExerciseIllustrations/glute_bridge_sequence.png
       - path: Resources/ExerciseIllustrations/standing_march_sequence.png
       - path: Resources/ExerciseIllustrations/tandem_walk_sequence.png
+      - path: Resources/ExerciseMistakes
+        excludes:
+          - "*.md"
+          - ".gitkeep"
       - path: Resources/Voice/Generated
       - path: Resources/ExerciseVideos/calf_raise_pexels_32115656_preview.mp4
       - path: Resources/ExerciseVideos/video_sources.json

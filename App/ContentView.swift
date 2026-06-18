@@ -150,6 +150,7 @@ private struct TrainingTabView: View {
                             ExerciseDemoView(
                                 exercise: planned.exercise,
                                 fitnessLevel: plan.fitnessLevel,
+                                plannedExercise: planned,
                                 showsStartButton: false,
                                 onStart: {}
                             )

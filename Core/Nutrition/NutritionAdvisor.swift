@@ -6,7 +6,9 @@ enum NutritionAdvisor {
     static func recommend(
         for result: AssessmentResult,
         content: NutritionContent,
-        weightKG: Double? = nil
+        weightKG: Double? = nil,
+        sex: BiologicalSex = .unspecified,
+        heightCM: Double? = nil
     ) -> NutritionAdvice {
         let ckdLevel: CKDLevel = result.hasCKD ? result.ckdLevel : .none
         let tier = content.ckdTiers.first { $0.level == ckdLevel }
@@ -40,7 +42,8 @@ enum NutritionAdvisor {
             return NutritionCalculator.calculate(
                 weightKG: weight,
                 ageRange: result.ageRange,
-                isMale: true, // TODO: 从用户档案获取性别
+                sex: sex,
+                heightCM: heightCM,
                 fitnessLevel: result.fitnessLevel,
                 hasDiabetes: result.hasDiabetes,
                 hasCKD: result.hasCKD,

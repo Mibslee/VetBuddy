@@ -17,16 +17,17 @@ enum NutritionCalculator {
     static func calculate(
         weightKG: Double,
         ageRange: String,
-        isMale: Bool,
+        sex: BiologicalSex,
+        heightCM: Double? = nil,
         fitnessLevel: FitnessLevel,
         hasDiabetes: Bool,
         hasCKD: Bool,
         hasHeartDisease: Bool
     ) -> NutritionRequirements {
         let age = midpointAge(ageRange)
-        let heightCM = defaultHeight(isMale: isMale, age: age)
+        let heightCM = heightCM ?? defaultHeight(sex: sex, age: age)
 
-        let bmr = mifflinStJeor(weightKG: weightKG, heightCM: heightCM, age: age, isMale: isMale)
+        let bmr = mifflinStJeor(weightKG: weightKG, heightCM: heightCM, age: age, sex: sex)
         let activityMultiplier = multiplierForFitness(fitnessLevel)
         let tdee = Int(Double(bmr) * activityMultiplier)
 
@@ -85,12 +86,15 @@ enum NutritionCalculator {
     /// Reference: Mifflin MD et al., "A new predictive equation for resting energy
     /// expenditure in healthy individuals.", Am J Clin Nutr. 1990;51(2):241-7.
     private static func mifflinStJeor(
-        weightKG: Double, heightCM: Double, age: Int, isMale: Bool
+        weightKG: Double, heightCM: Double, age: Int, sex: BiologicalSex
     ) -> Int {
-        if isMale {
+        switch sex {
+        case .male:
             return Int(10 * weightKG + 6.25 * heightCM - 5 * Double(age) + 5)
-        } else {
+        case .female:
             return Int(10 * weightKG + 6.25 * heightCM - 5 * Double(age) - 161)
+        case .unspecified:
+            return Int(10 * weightKG + 6.25 * heightCM - 5 * Double(age) - 78)
         }
     }
 
@@ -138,11 +142,14 @@ enum NutritionCalculator {
     /// Default height assumption for elderly Chinese.
     /// Source: Chinese DRIs 2023, Table 2-1 (average by age group).
     /// Male 60-70: ~165cm, Female 60-70: ~155cm.
-    private static func defaultHeight(isMale: Bool, age: Int) -> Double {
-        if isMale {
+    private static func defaultHeight(sex: BiologicalSex, age: Int) -> Double {
+        switch sex {
+        case .male:
             return age >= 70 ? 162.0 : 165.0
-        } else {
+        case .female:
             return age >= 70 ? 150.0 : 155.0
+        case .unspecified:
+            return age >= 70 ? 156.0 : 160.0
         }
     }
 }

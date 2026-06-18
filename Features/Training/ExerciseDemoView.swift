@@ -7,17 +7,20 @@ struct ExerciseDemoView: View {
 
     let exercise: Exercise
     let fitnessLevel: FitnessLevel
+    let plannedExercise: PlannedExercise?
     let showsStartButton: Bool
     let onStart: () -> Void
 
     init(
         exercise: Exercise,
         fitnessLevel: FitnessLevel,
+        plannedExercise: PlannedExercise? = nil,
         showsStartButton: Bool = true,
         onStart: @escaping () -> Void
     ) {
         self.exercise = exercise
         self.fitnessLevel = fitnessLevel
+        self.plannedExercise = plannedExercise
         self.showsStartButton = showsStartButton
         self.onStart = onStart
     }
@@ -27,6 +30,7 @@ struct ExerciseDemoView: View {
             VStack(spacing: 24) {
                 exerciseModelArea
                 exerciseInfo
+                ExerciseMistakesPanel(exercise: exercise)
                 ExerciseGuidancePanel(exercise: exercise)
                 setsRepsInfo
                 difficultyCard
@@ -70,17 +74,17 @@ struct ExerciseDemoView: View {
 
     private var setsRepsInfo: some View {
         HStack(spacing: 16) {
-            statBox(
-                label: "组数",
-                value: "\(exercise.setsForLevel(fitnessLevel))"
+                    statBox(
+                        label: "组数",
+                value: "\(plannedExercise?.sets ?? exercise.setsForLevel(fitnessLevel))"
             )
             statBox(
                 label: "次数",
-                value: "\(exercise.repsForLevel(fitnessLevel))"
+                value: "\(plannedExercise?.reps ?? exercise.repsForLevel(fitnessLevel))"
             )
             statBox(
                 label: "休息",
-                value: "\(exercise.restForLevel(fitnessLevel))秒"
+                value: "\(plannedExercise?.restSeconds ?? exercise.restForLevel(fitnessLevel))秒"
             )
         }
     }
